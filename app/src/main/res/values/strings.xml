@@ -1,0 +1,9 @@
+    <resources>
+        <string name="app_name_title">MOODIC</string>
+        <string name="app_tagline">Track your mood, discover your rhythm</string>
+        <string name="logo_content_description">MOODIC Logo</string>
+        <string name="enter_your_mood">Enter your mood</string>
+        <string name="submit_mood">Submit Mood</string>
+        <!-- Add other strings here -->
+    </resources>
+
