@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="#F0F4F8"
+    tools:context=".SignUpActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Create Account"
+        android:textSize="32sp"
+        android:textColor="#1E293B"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Get started by creating a new account"
+        android:textSize="16sp"
+        android:textColor="#475569"
+        android:layout_marginBottom="40dp"/>
+
+    <EditText
+        android:id="@+id/signUpEmailEditText"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:hint="Email"
+        android:inputType="textEmailAddress"
+        android:background= "@drawable/edit_text_background"
+        android:padding="16dp"
+        android:textColor="#1E293B"
+        android:layout_marginBottom="16dp"/>
+
+    <EditText
+        android:id="@+id/signUpPasswordEditText"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:hint="Password (min. 6 characters)"
+        android:inputType="textPassword"
+        android:background="@drawable/edit_text_background"
+        android:padding="16dp"
+        android:textColor="#1E293B"
+        android:layout_marginBottom="24dp"/>
+
+    <Button
+        android:id="@+id/signUpButton"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="Sign Up"
+        android:backgroundTint="#22C55E"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:layout_marginBottom="24dp"
+        app:cornerRadius="8dp"/>
+
+    <TextView
+        android:id="@+id/goToSignInTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Already have an account? Sign In"
+        android:textColor="#4A90E2"
+        android:textSize="16sp"/>
+
+</LinearLayout>

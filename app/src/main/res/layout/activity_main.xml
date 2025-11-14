@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="24dp"
+    android:background="#FFFFFF">
+
+    <!-- Logged-in user email -->
+    <TextView
+        android:id="@+id/tvUserEmail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Loading user..."
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="32dp" />
+
+    <WebView
+        android:id="@+id/youtubeWebView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+    <!-- Logout Button -->
+    <Button
+        android:id="@+id/btnLogout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Log Out" />
+
+</LinearLayout>
