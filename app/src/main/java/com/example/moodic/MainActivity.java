@@ -1,48 +1,75 @@
 package com.example.moodic;
 
-import androidx.appcompat.app.AppCompatActivity;
+import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
 import android.widget.Button;
-import android.widget.TextView;
 
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
+import com.google.api.services.youtube.YouTubeScopes;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
-public class MainActivity extends AppCompatActivity {
+import java.util.Arrays;
+import java.util.List;
 
-    private WebView youtubeWebView;
-    private Button btnLogout;
-    private TextView tvUserEmail;
-    private FirebaseAuth mAuth;
+import pub.devrel.easypermissions.AfterPermissionGranted;
+import pub.devrel.easypermissions.EasyPermissions;
+
+public class MainActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks {
+    GoogleAccountCredential mCredential;
+
+    static final int REQUEST_ACCOUNT_PICKER = 1000;
+    static final String PREF_ACCOUNT_NAME = "accountName";
+    private static final String[] SCOPES = { YouTubeScopes.YOUTUBE_READONLY };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
-        youtubeWebView = findViewById(R.id.youtubeWebView);
-        btnLogout = findViewById(R.id.btnLogout);
-        tvUserEmail = findViewById(R.id.tvUserEmail);
-
-        mAuth = FirebaseAuth.getInstance();
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-
-        if(currentUser != null){
-            tvUserEmail.setText("Logged in as: " + currentUser.getEmail());
+        // --- Firebase login check ---
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return; // stop executing rest of onCreate
         }
 
-        // Load a default YouTube video
-        WebSettings webSettings = youtubeWebView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        youtubeWebView.loadUrl("https://www.youtube.com/embed/dQw4w9WgXcQ"); // example video
+        setContentView(R.layout.activity_main);
 
-        btnLogout.setOnClickListener(v -> {
-            mAuth.signOut();
-            startActivity(new Intent(MainActivity.this, LoginActivity.class));
-            finish();
-        });
+        // --- YouTube OAuth setup ---
+        mCredential = GoogleAccountCredential.usingOAuth2(this, Arrays.asList(SCOPES));
+        chooseAccount();
+
+        // --- Navigation buttons ---
+        Button moodButton = findViewById(R.id.moodButton);
+        Button youtubeButton = findViewById(R.id.youtubeButton);
+
+        moodButton.setOnClickListener(v -> startActivity(new Intent(this, MoodInputActivity.class)));
+        youtubeButton.setOnClickListener(v -> startActivity(new Intent(this, YouTubeSearchActivity.class)));
     }
+
+    @AfterPermissionGranted(1003)
+    private void chooseAccount() {
+        if (EasyPermissions.hasPermissions(this, Manifest.permission.GET_ACCOUNTS)) {
+            String accountName = getPreferences(Context.MODE_PRIVATE).getString(PREF_ACCOUNT_NAME, null);
+            if (accountName != null) {
+                mCredential.setSelectedAccountName(accountName);
+            } else {
+                startActivityForResult(mCredential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
+            }
+        } else {
+            EasyPermissions.requestPermissions(this,
+                    "Need account access",
+                    1003,
+                    Manifest.permission.GET_ACCOUNTS);
+        }
+    }
+
+    @Override
+    public void onPermissionsGranted(int requestCode, List<String> perms) {}
+
+    @Override
+    public void onPermissionsDenied(int requestCode, List<String> perms) {}
 }
