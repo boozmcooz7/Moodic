@@ -27,5 +27,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Log Out" />
+    <Button
+        android:id="@+id/moodButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enter Mood" />
+
+    <Button
+        android:id="@+id/youtubeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Search YouTube" />
+yes
 
 </LinearLayout>
