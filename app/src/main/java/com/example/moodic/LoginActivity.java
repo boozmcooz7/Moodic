@@ -169,7 +169,7 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
     private void saveUserData(FirebaseUser user, Map<String, Object> userData) {
-        db.collection("users").document(user.getUid())
+        db.collection("Users").document(user.getUid())
                 .set(userData)
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(LoginActivity.this, "הרשמה מוצלחת ופרטי משתמש נשמרו! 🥳", Toast.LENGTH_SHORT).show();
