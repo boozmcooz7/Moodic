@@ -1,8 +1,19 @@
 package com.example.moodic;
-
+import com.example.moodic.data.FirebaseManager;
+import com.example.moodic.models.Track;
+import java.util.HashMap;
+import java.util.Map;
 public class InputProcessor {
 
+    public static void processMoodInput(String uid, String mood, String genre, String trackName, long timestamp) {
+        Map<String, Object> moodData = new HashMap<>();
+        moodData.put("mood", mood);
+        moodData.put("genre", genre);
+        moodData.put("trackName", trackName);
+        moodData.put("timestamp", timestamp);
 
+        FirebaseManager.getInstance().saveMoodEntry(uid, moodData);
+    }
     // Process the raw input based on the input type
     public static String processInput(String rawInput, String inputType) {
         switch (inputType) {
@@ -17,7 +28,6 @@ public class InputProcessor {
         }
     }
 
-    // Example: Process mood input
     private static String processMoodInput(String rawInput) {
         // Assume rawInput is a string representing mood (e.g., "happy", "sad", "neutral")
         switch (rawInput.toLowerCase()) {
@@ -32,17 +42,16 @@ public class InputProcessor {
         }
     }
 
-    // Example: Process genre input
     private static String processGenreInput(String rawInput) {
         // Process raw genre input, e.g., if rawInput contains "pop", "rock", etc.
-        if (rawInput.equalsIgnoreCase("pop") || rawInput.equalsIgnoreCase("rock")) {
+        if (rawInput.equalsIgnoreCase("pop") || rawInput.equalsIgnoreCase("rock")
+                || rawInput.equalsIgnoreCase("jazz") || rawInput.equalsIgnoreCase("hip-hop"))  {
             return "Favorite genre: " + rawInput;
         } else {
             return "Unknown genre: " + rawInput;
         }
     }
 
-    // Example: Process track input (you can modify this if necessary)
     private static String processTrackInput(String rawInput) {
         // Assume rawInput is a string representing a track name
         if (rawInput != null && !rawInput.isEmpty()) {

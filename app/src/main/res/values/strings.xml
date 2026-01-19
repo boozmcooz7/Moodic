@@ -5,5 +5,15 @@
         <string name="enter_your_mood">Enter your mood</string>
         <string name="submit_mood">Submit Mood</string>
         <!-- Add other strings here -->
+            <string-array name="genre_array">
+                    <item>Pop</item>
+                    <item>Rock</item>
+                    <item>Jazz</item>
+                    <item>Hip-Hop</item>
+                    <item>Classical</item>
+                    <item>Electronic</item>
+                    <item>RNB</item>
+            </string-array>
     </resources>
+
 

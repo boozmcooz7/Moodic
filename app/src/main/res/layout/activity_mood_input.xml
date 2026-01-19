@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout
 xmlns:android="http://schemas.android.com/apk/res/android"
 android:layout_width="match_parent"
@@ -12,10 +13,31 @@ android:padding="16dp">
     android:layout_height="wrap_content"
     android:hint="Enter your mood..." />
 
+<TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Select Genre:"
+    android:textStyle="bold"
+    android:layout_marginTop="16dp" />
+
+<Spinner
+    android:id="@+id/genreSpinner"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:entries="@array/genre_array" />
+
+<EditText
+    android:id="@+id/trackInput"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:hint="Enter track name..."
+    android:layout_marginTop="16dp" />
+
 <Button
     android:id="@+id/analyzeButton"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:text="Analyze Mood" />
+    android:text="Save Mood"
+    android:layout_marginTop="16dp" />
 
 </LinearLayout>
