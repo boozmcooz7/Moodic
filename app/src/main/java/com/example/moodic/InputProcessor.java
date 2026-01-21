@@ -1,21 +1,61 @@
 package com.example.moodic;
+
+import android.util.Log;
+
+import com.example.moodic.ai.AIEngine;
 import com.example.moodic.data.FirebaseManager;
-import com.example.moodic.models.Track;
+
 import java.util.HashMap;
 import java.util.Map;
+
 public class InputProcessor {
+    private static final String TAG = "InputProcessor";
 
-    public static void processMoodInput(String uid, String mood, String genre, String trackName, long timestamp) {
-        Map<String, Object> moodData = new HashMap<>();
-        moodData.put("mood", mood);
-        moodData.put("genre", genre);
-        moodData.put("trackName", trackName);
-        moodData.put("timestamp", timestamp);
+    /**
+     * Process mood input from UI, analyze with Gemini, and save to Firebase
+     */
+    public static void processMoodInput(String uid, String mood, String genre, String trackName, long timestamp, ProcessorCallback callback) {
+        Log.d(TAG, "Processing mood input: " + mood);
 
-        FirebaseManager.getInstance().saveMoodEntry(uid, moodData);
+        // Step 1: Analyze mood with AIEngine (uses Gemini)
+        AIEngine.getInstance().analyzeMoodToVector(mood)
+                .thenAccept(musicVector -> {
+                    Log.d(TAG, "✅ Music vector created: " + musicVector);
+
+                    // Step 2: Create mood entry data
+                    Map<String, Object> moodData = new HashMap<>();
+                    moodData.put("mood", mood);
+                    moodData.put("genre", genre);
+                    moodData.put("trackName", trackName);
+                    moodData.put("timestamp", timestamp);
+                    moodData.put("musicVector", musicVector.toMap());
+
+                    // Step 3: Save to Firebase
+                    FirebaseManager.getInstance().saveMoodEntry(uid, moodData);
+
+                    // Step 4: Callback success
+                    if (callback != null) {
+                        callback.onSuccess(musicVector);
+                    }
+                })
+                .exceptionally(e -> {
+                    Log.e(TAG, "❌ Error processing mood", e);
+                    if (callback != null) {
+                        callback.onError(e.getMessage());
+                    }
+                    return null;
+                });
     }
-    // Process the raw input based on the input type
-    public static String processInput(String rawInput, String inputType) {
+
+    /**
+     * Validate mood input
+     */
+    static boolean isValidMoodInput(String mood) {
+        return mood != null && !mood.trim().isEmpty();
+    }
+
+    // Legacy methods (kept for compatibility)
+    static String processInput(String rawInput, String inputType) {
         switch (inputType) {
             case "mood":
                 return processMoodInput(rawInput);
@@ -29,7 +69,6 @@ public class InputProcessor {
     }
 
     private static String processMoodInput(String rawInput) {
-        // Assume rawInput is a string representing mood (e.g., "happy", "sad", "neutral")
         switch (rawInput.toLowerCase()) {
             case "happy":
                 return "Positive mood detected";
@@ -43,9 +82,8 @@ public class InputProcessor {
     }
 
     private static String processGenreInput(String rawInput) {
-        // Process raw genre input, e.g., if rawInput contains "pop", "rock", etc.
         if (rawInput.equalsIgnoreCase("pop") || rawInput.equalsIgnoreCase("rock")
-                || rawInput.equalsIgnoreCase("jazz") || rawInput.equalsIgnoreCase("hip-hop"))  {
+                || rawInput.equalsIgnoreCase("jazz") || rawInput.equalsIgnoreCase("hip-hop")) {
             return "Favorite genre: " + rawInput;
         } else {
             return "Unknown genre: " + rawInput;
@@ -53,7 +91,6 @@ public class InputProcessor {
     }
 
     private static String processTrackInput(String rawInput) {
-        // Assume rawInput is a string representing a track name
         if (rawInput != null && !rawInput.isEmpty()) {
             return "Track added: " + rawInput;
         } else {
@@ -61,14 +98,7 @@ public class InputProcessor {
         }
     }
 
-    // Determine final mood or input outcome (simplified)
-    public static String determineFinalMood(String processedMoodInput) {
-        if (processedMoodInput.contains("Positive")) {
-            return "User is in a good mood";
-        } else if (processedMoodInput.contains("Negative")) {
-            return "User is in a bad mood";
-        } else {
-            return "Mood is neutral";
-        }
-    }
+    void onSuccess(AIEngine.MusicVector vector);
+    void onError(String errorMessage);
 }
+
