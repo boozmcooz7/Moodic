@@ -1,14 +1,13 @@
 package com.example.moodic;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.moodic.data.FirebaseManager;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class MoodInputActivity extends AppCompatActivity {
@@ -22,18 +21,20 @@ public class MoodInputActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mood_input);
+
+        // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
 
-        EditText moodInput = findViewById(R.id.moodInput);
-        Button analyzeButton = findViewById(R.id.analyzeButton);
+        // Get UI elements (removed duplicate declarations)
         moodInput = findViewById(R.id.moodInput);
         genreSpinner = findViewById(R.id.genreSpinner);
         trackInput = findViewById(R.id.trackInput);
         analyzeButton = findViewById(R.id.analyzeButton);
 
+        // Set button listener
         analyzeButton.setOnClickListener(v -> saveMoodEntry());
-
     }
+
     private void saveMoodEntry() {
         String mood = moodInput.getText().toString().trim();
         String genre = genreSpinner.getSelectedItem().toString();
@@ -42,6 +43,12 @@ public class MoodInputActivity extends AppCompatActivity {
         // Validate input
         if (mood.isEmpty()) {
             Toast.makeText(this, "Please enter a mood", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Check if user is logged in
+        if (mAuth.getCurrentUser() == null) {
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -58,5 +65,4 @@ public class MoodInputActivity extends AppCompatActivity {
         moodInput.setText("");
         trackInput.setText("");
     }
-
 }

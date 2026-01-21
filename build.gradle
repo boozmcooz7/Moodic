@@ -1,10 +1,8 @@
-buildscript {
-    dependencies {
-        classpath "com.android.tools.build:gradle:8.3.0" // use your version
-        classpath "com.google.gms:google-services:4.4.4"
-    }
-}
+
 
 plugins {
     alias(libs.plugins.android.application) apply false
+
+    // We must add '.services' because of the name in your TOML
+    alias(libs.plugins.google.gms.google.services) apply false
 }
