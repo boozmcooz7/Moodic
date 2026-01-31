@@ -4,6 +4,7 @@ appcompatV7 = "28.0.0"
 auth = "3.0.0"
 authVersion = "3.0.0"
 cardview = "1.0.0"
+compiler = "5.0.5"
 converterGson = "3.0.0"
 converterGsonVersion = "3.0.0"
 core = "13.0.0"
@@ -54,6 +55,7 @@ com-google-firebase-firebase-auth2 = { module = "com.google.firebase:firebase-au
 com-google-firebase-firebase-auth3 = { module = "com.google.firebase:firebase-auth" }
 com-google-firebase-firebase-database = { module = "com.google.firebase:firebase-database" }
 com-google-firebase-firebase-firestore2 = { module = "com.google.firebase:firebase-firestore" }
+compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "compiler" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 converter-gson-v290 = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGsonVersion" }
 core = { module = "com.pierfrancescosoffritti.androidyoutubeplayer:core", version.ref = "core" }

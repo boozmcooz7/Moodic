@@ -1,7 +1,6 @@
 package com.example.moodic.activities;
 import com.example.moodic.AuthCompleteListener;
 import com.example.moodic.LoginActivity;
-import com.example.moodic.MoodInputActivity;
 import com.example.moodic.R;
 import com.example.moodic.data.FirebaseManager;
 

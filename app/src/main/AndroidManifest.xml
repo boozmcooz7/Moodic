@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example.moodic">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -16,23 +17,36 @@
         android:theme="@style/Theme.Moodic"
         tools:targetApi="31">
 
+        <!-- Login Activity - LAUNCHER -->
         <activity
             android:name=".LoginActivity"
             android:exported="true"
-            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"> <!-- Optional: No action bar for login screen -->
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-
+        <!-- Main Activity - Navigation Hub -->
         <activity
-            android:name=".MainActivity"
-            android:exported="false"
+            android:name=".activities.MainActivity"
+            android:exported="true"
             android:launchMode="singleTop" />
+
+        <!-- Mood Input Activity -->
         <activity
-            android:name=".MoodInputActivity"
+            android:name=".activities.MoodInputActivity"
+            android:exported="false" />
+
+        <!-- YouTube Search Activity -->
+        <activity
+            android:name=".activities.YouTubeSearchActivity"
+            android:exported="false" />
+
+        <!-- Results Activity -->
+        <activity
+            android:name=".activities.ResultsActivity"
             android:exported="false" />
 
     </application>

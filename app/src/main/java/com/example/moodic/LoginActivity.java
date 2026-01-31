@@ -14,6 +14,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.moodic.activities.MoodInputActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -22,7 +23,6 @@ import com.google.firebase.storage.StorageReference;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 
 public class LoginActivity extends AppCompatActivity {
@@ -41,7 +41,7 @@ public class LoginActivity extends AppCompatActivity {
 
     // ViewModel
     private Uri imageUri;
-    private AuthViewModel authViewModel;
+    public AuthViewModel authViewModel;
 
 
     @Override

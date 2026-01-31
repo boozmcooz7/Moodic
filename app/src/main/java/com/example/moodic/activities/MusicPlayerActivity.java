@@ -1,10 +1,12 @@
-package com.example.moodic;
+package com.example.moodic.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
+import com.example.moodic.R;
 
 public class MusicPlayerActivity extends AppCompatActivity {
 

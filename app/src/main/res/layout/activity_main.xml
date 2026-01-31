@@ -3,41 +3,55 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center_horizontal"
+    android:gravity="center"
     android:padding="24dp"
     android:background="#FFFFFF">
 
-    <!-- Logged-in user email -->
+    <!-- Welcome/User Info -->
     <TextView
-        android:id="@+id/tvUserEmail"
-        android:layout_width="wrap_content"
+        android:id="@+id/welcomeText"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Loading user..."
-        android:textSize="20sp"
+        android:text="Welcome!"
+        android:textSize="24sp"
         android:textStyle="bold"
+        android:textAlignment="center"
         android:layout_marginBottom="32dp" />
 
-    <WebView
-        android:id="@+id/youtubeWebView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-    <!-- Logout Button -->
-    <Button
-        android:id="@+id/btnLogout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Log Out" />
+    <!-- Add Mood Button -->
     <Button
         android:id="@+id/moodButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Enter Mood" />
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="➕ Add Mood"
+        android:textSize="18sp"
+        android:layout_marginBottom="16dp" />
 
+    <!-- Search YouTube Button -->
     <Button
         android:id="@+id/youtubeButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Search YouTube" />
-yes
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="🔍 Search Music"
+        android:textSize="18sp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Favorites Button -->
+    <Button
+        android:id="@+id/favoritesButton"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="❤️ My Favorites"
+        android:textSize="18sp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Logout Button -->
+    <Button
+        android:id="@+id/logoutButton"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="🚪 Logout"
+        android:textSize="18sp"
+        android:backgroundTint="#ff6b6b" />
 
 </LinearLayout>
