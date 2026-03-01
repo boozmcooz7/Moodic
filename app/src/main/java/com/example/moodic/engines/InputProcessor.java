@@ -1,7 +1,8 @@
-package com.example.moodic;
+package com.example.moodic.engines;
 
 import android.util.Log;
 import com.example.moodic.data.FirebaseManager;
+
 import java.util.HashMap;
 import java.util.Map;
 

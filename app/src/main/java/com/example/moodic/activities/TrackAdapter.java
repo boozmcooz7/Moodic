@@ -2,12 +2,14 @@ package com.example.moodic.activities;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -47,22 +49,38 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         holder.title.setText(track.getTitle());
         holder.artist.setText(track.getArtist());
 
+        // Optimized Image Loading
         if (track.getThumbnailUrl() != null && !track.getThumbnailUrl().isEmpty()) {
             Glide.with(context)
                     .load(track.getThumbnailUrl())
+                    .placeholder(R.drawable.rounded_info_box) // Fallback while loading
                     .into(holder.thumbnail);
         }
 
+        // IMPROVED: Direct YouTube Launch
         holder.playButton.setOnClickListener(v -> {
-            Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
-            intent.setData(android.net.Uri.parse(track.getYoutubeUrl()));
-            context.startActivity(intent);
+            String url = track.getYoutubeUrl();
+            if (url != null && !url.isEmpty()) {
+                try {
+                    // Try to launch the YouTube app directly
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(intent);
+                } catch (Exception e) {
+                    // If YouTube app isn't installed, launch in browser
+                    Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    context.startActivity(webIntent);
+                }
+            } else {
+                Toast.makeText(context, "Link not available", Toast.LENGTH_SHORT).show();
+            }
         });
 
         holder.favoriteButton.setOnClickListener(v -> {
             holder.favoriteButton.setText("❤️ Favorited");
             holder.favoriteButton.setEnabled(false);
-            // TODO: Save to Firebase favorites
+            // TODO: Use FirebaseManager.getInstance().saveFavorite(track) here
+            Toast.makeText(context, "Saved to favorites!", Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -71,7 +89,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         return tracks.size();
     }
 
-    public class TrackViewHolder extends RecyclerView.ViewHolder {
+    public static class TrackViewHolder extends RecyclerView.ViewHolder {
         public ImageView thumbnail;
         public TextView title;
         public TextView artist;

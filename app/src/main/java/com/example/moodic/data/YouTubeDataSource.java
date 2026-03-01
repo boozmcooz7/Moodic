@@ -1,4 +1,4 @@
-package com.example.moodic;
+package com.example.moodic.data;
 
 import android.util.Log;
 

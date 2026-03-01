@@ -67,9 +67,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore:25.0.0'
     implementation 'com.google.firebase:firebase-storage:21.0.0'
     implementation 'com.google.firebase:firebase-database:21.0.0'
-
-    // --- GEMINI AI (DIRECT STRINGS) ---
-    implementation 'com.google.ai.client.generativeai:generativeai:0.9.0'
+    implementation("com.google.firebase:firebase-ai")
 
     // --- THE GUAVA FIX (Crucial for the 9 failures) ---
     implementation 'com.google.guava:guava:33.0.0-android'

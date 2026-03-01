@@ -1,4 +1,4 @@
-package com.example.moodic;
+package com.example.moodic.activities;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -14,7 +14,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.moodic.activities.SignUpActivity;
+import com.example.moodic.AuthViewModel;
+import com.example.moodic.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;

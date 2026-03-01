@@ -1,4 +1,4 @@
-package com.example.moodic;
+package com.example.moodic.notifications;
 
 import android.content.Context;
 

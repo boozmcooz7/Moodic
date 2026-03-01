@@ -5,7 +5,7 @@
     android:orientation="vertical"
     android:gravity="center"
     android:padding="24dp"
-    android:background="#FFFFFF">
+    android:background="@color/white">
 
     <!-- Welcome/User Info -->
     <TextView
@@ -17,6 +17,11 @@
         android:textStyle="bold"
         android:textAlignment="center"
         android:layout_marginBottom="32dp" />
+    <!-- Spacer -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
     <!-- Add Mood Button -->
     <Button
@@ -43,6 +48,13 @@
         android:layout_height="60dp"
         android:text="❤️ My Favorites"
         android:textSize="18sp"
+        android:layout_marginBottom="16dp" />
+    <Button
+        android:id="@+id/settingsButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="⚙️ Settings"
+        android:textSize="16sp"
         android:layout_marginBottom="16dp" />
 
     <!-- Logout Button -->

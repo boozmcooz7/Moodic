@@ -49,7 +49,7 @@ public class AuthViewModel extends ViewModel {
     }
 
     // Helper class for results
-    class AuthResult {
+    public class AuthResult {
         @Nullable
         public final FirebaseUser user;
         @Nullable

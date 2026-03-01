@@ -3,7 +3,6 @@ package com.example.moodic.activities;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -13,10 +12,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.moodic.R;
-import com.example.moodic.AIEngine;
-import com.example.moodic.YouTubeDataSource;
+import com.example.moodic.engines.AIEngine;
+import com.example.moodic.data.YouTubeDataSource;
 import com.example.moodic.models.Track;
-import com.example.moodic.activities.TrackAdapter;
 
 
 import java.util.List;
@@ -68,56 +66,67 @@ public class ResultsActivity extends AppCompatActivity {
     private void loadMusicRecommendations() {
         showLoading(true);
 
-        new Thread(() -> {
-            try {
-                // Step 1: Analyze mood with AIEngine
-                Log.d(TAG, "Step 1: Analyzing mood...");
-//                AIEngine.MusicVector vector = AIEngine.getInstance()
-//                        .analyzeMoodToVector(userMood);
-//                Log.d(TAG, "✅ Music vector created: " + vector);
+        // Step 1: Analyze mood with AIEngine using the new Callback
+        AIEngine.getInstance().analyzeMoodToVector(userMood, new AIEngine.MusicVectorCallback() {
+            @Override
+            public void onSuccess(AIEngine.MusicVector vector) {
+                // Step 2: Search YouTube in a background thread
+                new Thread(() -> {
+                    try {
+                        Log.d(TAG, "✅ Music vector created: " + vector);
+                        Log.d(TAG, "Step 2: Searching YouTube...");
 
-                // Step 2: Search YouTube for tracks
-                Log.d(TAG, "Step 2: Searching YouTube...");
-                YouTubeDataSource youtube = YouTubeDataSource.getInstance();
-                List<Track> tracks = youtube.searchByMoodAndGenre(userMood, userGenre);
-                Log.d(TAG, "✅ Found " + tracks.size() + " tracks");
+                        YouTubeDataSource youtube = YouTubeDataSource.getInstance();
+                        List<Track> tracks = youtube.searchByMoodAndGenre(userMood, userGenre);
+                        Log.d(TAG, "✅ Found " + tracks.size() + " tracks");
 
-                // Step 3: Update UI on main thread
-                runOnUiThread(() -> {
-                    showLoading(false);
-                    //displayResults(vector, tracks);
-                });
+                        // Step 3: Update UI on main thread
+                        runOnUiThread(() -> {
+                            showLoading(false);
+                            displayResults(vector, tracks);
+                        });
 
-            } catch (Exception e) {
-                Log.e(TAG, "❌ Error in recommendation flow", e);
-                runOnUiThread(() -> {
-                    showLoading(false);
-                    showError(e.getMessage());
-                });
+                    } catch (Exception e) {
+                        handleError("YouTube search failed: " + e.getMessage());
+                    }
+                }).start();
             }
-        }).start();
+
+            @Override
+            public void onFailure(Throwable t) {
+                handleError("AI Analysis failed: " + t.getMessage());
+            }
+        });
     }
 
     /**
      * Display music vector and tracks on UI
      */
     private void displayResults(AIEngine.MusicVector vector, List<Track> tracks) {
-        // Display vector info
-        String vectorInfo = String.format(
-                "Energy: %.2f | Tempo: %.2f | Valence: %.2f | Danceability: %.2f | Acousticness: %.2f",
-                vector.energy, vector.tempo, vector.valence, vector.danceability, vector.acousticness
-        );
-        vectorDisplay.setText(vectorInfo);
-        Log.d(TAG, vectorInfo);
+        // Display vector info - Fixed to use standard text (no LaTeX needed here)
+        String vectorInfo = "Energy: " + String.format("%.2f", vector.energy) +
+                " | Tempo: " + String.format("%.2f", vector.tempo) +
+                " | Valence: " + String.format("%.2f", vector.valence);
 
-        // Display tracks
-        if (tracks.isEmpty()) {
+        vectorDisplay.setText(vectorInfo);
+
+        // Update the RecyclerView Adapter
+        if (tracks == null || tracks.isEmpty()) {
             Toast.makeText(this, "No tracks found for this mood", Toast.LENGTH_SHORT).show();
             retryButton.setVisibility(android.view.View.VISIBLE);
         } else {
+            // This is the critical line that actually shows the music!
             adapter.setTracks(tracks);
-            Toast.makeText(this, "Found " + tracks.size() + " tracks!", Toast.LENGTH_SHORT).show();
+            retryButton.setVisibility(android.view.View.GONE);
         }
+    }
+
+    private void handleError(String message) {
+        Log.e(TAG, message);
+        runOnUiThread(() -> {
+            showLoading(false);
+            showError(message);
+        });
     }
 
     /**

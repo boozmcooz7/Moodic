@@ -16,65 +16,69 @@
         android:layout_marginBottom="32dp"
         android:textAlignment="center" />
 
-    <!-- Mood Input -->
+    <!-- Mood Input Section -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="1. Enter Your Mood"
+        android:text="1. Describe Your Mood"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:layout_marginBottom="8dp" />
+        android:layout_marginBottom="12dp" />
+
+    <!-- Microphone Button -->
     <ImageButton
         android:id="@+id/micButton"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
         android:src="@android:drawable/ic_btn_speak_now"
         android:layout_gravity="center"
-        android:contentDescription="Voice Input" />
+        android:contentDescription="Voice Input"
+        android:layout_marginBottom="16dp"
+        android:scaleType="centerInside"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:backgroundTint="@android:color/white" />
 
+    <!-- Mood Input Field -->
     <EditText
         android:id="@+id/moodInput"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="60dp"
         android:hint="e.g., happy, sad, energetic, calm..."
         android:inputType="text"
         android:padding="16dp"
-        android:layout_marginBottom="24dp" />
+        android:layout_marginBottom="32dp"
+        android:background="@drawable/rounded_edittext"
+        android:textColorHint="@color/hint_color" />
 
-    <!-- Genre Selection -->
+    <!-- Genre Selection Section -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="2. Select Genre"
+        android:text="2. Choose a Genre (Optional)"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:layout_marginBottom="8dp" />
+        android:layout_marginBottom="12dp" />
 
     <Spinner
         android:id="@+id/genreSpinner"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="60dp"
         android:entries="@array/genre_array"
-        android:layout_marginBottom="24dp"
-        android:padding="16dp" />
+        android:layout_marginBottom="32dp"
+        android:padding="16dp"
+        android:background="@drawable/rounded_spinner" />
 
-    <!-- Track Name (Optional) -->
+    <!-- Info Text -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="3. Track Name (Optional)"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp" />
-
-    <EditText
-        android:id="@+id/trackInput"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:hint="Leave empty to get recommendations"
-        android:inputType="text"
-        android:padding="16dp"
-        android:layout_marginBottom="32dp" />
+        android:text="💡 Tip: Be specific with your mood for better recommendations (e.g., 'happy and energetic' instead of just 'good')"
+        android:textSize="12sp"
+        android:textStyle="italic"
+        android:layout_marginBottom="24dp"
+        android:padding="12dp"
+        android:background="@drawable/rounded_info_box"
+        android:backgroundTint="@android:color/white" />
 
     <!-- Loading Spinner -->
     <ProgressBar
@@ -99,6 +103,7 @@
         android:text="🎵 Get Recommendations"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:backgroundTint="#6200EE" />
+        android:backgroundTint="#6200EE"
+        android:textColor="@android:color/white" />
 
 </LinearLayout>

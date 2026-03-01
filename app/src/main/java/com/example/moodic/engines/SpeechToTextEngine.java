@@ -1,17 +1,13 @@
-package com.example.moodic;
+package com.example.moodic.engines;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
 
-import androidx.annotation.Nullable;
-
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * SpeechToTextEngine: Captures user voice input for mood description
