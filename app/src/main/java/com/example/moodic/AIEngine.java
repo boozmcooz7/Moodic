@@ -1,15 +1,33 @@
 package com.example.moodic;
 
 import android.util.Log;
-
+import com.google.ai.client.generativeai.GenerativeModel;
+import com.google.ai.client.generativeai.java.GenerativeModelFutures;
+import com.google.ai.client.generativeai.type.Content;
+import com.google.ai.client.generativeai.type.GenerateContentResponse;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
 public class AIEngine {
     private static final String TAG = "AIEngine";
     private static AIEngine instance;
+    private GenerativeModelFutures model;
 
     private AIEngine() {
+        try {
+            GenerativeModel gm = new GenerativeModel(
+                    "gemini-1.5-flash",
+                    BuildConfig.Gemini_API_KEY
+            );
+            this.model = GenerativeModelFutures.from(gm);
+            Log.d(TAG, "✅ Gemini AI initialized");
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Initialization error", e);
+        }
     }
 
     public static AIEngine getInstance() {
@@ -19,168 +37,89 @@ public class AIEngine {
         return instance;
     }
 
-    /**
-     * Analyzes mood/emotion and returns a music vector
-     * Music vector contains: energy, tempo, valence, danceability, acousticness
-     */
-    public MusicVector analyzeMoodToVector(String moodInput) {
-        Log.d(TAG, "Analyzing mood: " + moodInput);
-
-        String normalizedMood = moodInput.toLowerCase().trim();
-        MusicVector vector = mapMoodToVector(normalizedMood);
-
-        Log.d(TAG, "✅ Music vector created: " + vector);
-        return vector;
-    }
-
-    /**
-     * Maps specific moods to music vector values
-     */
-    private MusicVector mapMoodToVector(String mood) {
-        MusicVector vector = new MusicVector();
-
-        switch (mood) {
-            case "happy":
-            case "joyful":
-            case "excited":
-                vector.energy = 0.9;
-                vector.tempo = 0.85;
-                vector.valence = 0.95;
-                vector.danceability = 0.8;
-                vector.acousticness = 0.3;
-                break;
-
-            case "sad":
-            case "depressed":
-            case "melancholic":
-                vector.energy = 0.2;
-                vector.tempo = 0.3;
-                vector.valence = 0.1;
-                vector.danceability = 0.2;
-                vector.acousticness = 0.8;
-                break;
-
-            case "angry":
-            case "frustrated":
-            case "aggressive":
-                vector.energy = 0.95;
-                vector.tempo = 0.9;
-                vector.valence = 0.2;
-                vector.danceability = 0.7;
-                vector.acousticness = 0.1;
-                break;
-
-            case "calm":
-            case "relaxed":
-            case "peaceful":
-                vector.energy = 0.3;
-                vector.tempo = 0.35;
-                vector.valence = 0.6;
-                vector.danceability = 0.3;
-                vector.acousticness = 0.9;
-                break;
-
-            case "energetic":
-            case "motivated":
-            case "pumped":
-                vector.energy = 0.85;
-                vector.tempo = 0.8;
-                vector.valence = 0.75;
-                vector.danceability = 0.85;
-                vector.acousticness = 0.2;
-                break;
-
-            case "romantic":
-            case "love":
-            case "affectionate":
-                vector.energy = 0.5;
-                vector.tempo = 0.55;
-                vector.valence = 0.8;
-                vector.danceability = 0.4;
-                vector.acousticness = 0.7;
-                break;
-
-            case "neutral":
-            case "normal":
-            case "fine":
-                vector.energy = 0.5;
-                vector.tempo = 0.5;
-                vector.valence = 0.5;
-                vector.danceability = 0.5;
-                vector.acousticness = 0.5;
-                break;
-
-            case "anxious":
-            case "nervous":
-            case "stressed":
-                vector.energy = 0.7;
-                vector.tempo = 0.75;
-                vector.valence = 0.3;
-                vector.danceability = 0.5;
-                vector.acousticness = 0.6;
-                break;
-
-            case "focused":
-            case "concentrated":
-            case "productive":
-                vector.energy = 0.6;
-                vector.tempo = 0.65;
-                vector.valence = 0.55;
-                vector.danceability = 0.4;
-                vector.acousticness = 0.3;
-                break;
-
-            case "tired":
-            case "exhausted":
-            case "sleepy":
-                vector.energy = 0.1;
-                vector.tempo = 0.15;
-                vector.valence = 0.4;
-                vector.danceability = 0.1;
-                vector.acousticness = 0.85;
-                break;
-
-            default:
-                // Default to neutral if mood not recognized
-                vector.energy = 0.5;
-                vector.tempo = 0.5;
-                vector.valence = 0.5;
-                vector.danceability = 0.5;
-                vector.acousticness = 0.5;
-                break;
+    public void analyzeMoodToVector(String moodInput, MusicVectorCallback callback) {
+        if (moodInput == null || moodInput.trim().isEmpty()) {
+            callback.onSuccess(createNeutralVector());
+            return;
         }
 
-        return vector;
+        try {
+            String prompt = "Analyze mood: '" + moodInput + "'. Return ONLY JSON: " +
+                    "{\"energy\":0.5, \"tempo\":0.5, \"valence\":0.5, \"danceability\":0.5, \"acousticness\":0.5}";
+
+            Content content = new Content.Builder().addText(prompt).build();
+            ListenableFuture<GenerateContentResponse> future = model.generateContent(content);
+
+            Futures.addCallback(future, new FutureCallback<GenerateContentResponse>() {
+                @Override
+                public void onSuccess(GenerateContentResponse response) {
+                    try {
+                        String text = response.getText();
+                        callback.onSuccess(parseMusicVector(text, moodInput));
+                    } catch (Exception e) {
+                        callback.onSuccess(mapMoodToVector(moodInput));
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    callback.onFailure(t);
+                }
+            }, Runnable::run);
+        } catch (Exception e) {
+            callback.onSuccess(mapMoodToVector(moodInput));
+        }
     }
 
-    /**
-     * Music vector class representing audio characteristics
-     */
-    public static class MusicVector {
-        public double energy;        // 0.0 (calm) to 1.0 (intense)
-        public double tempo;         // 0.0 (slow) to 1.0 (fast)
-        public double valence;       // 0.0 (sad) to 1.0 (happy)
-        public double danceability;  // 0.0 (not danceable) to 1.0 (very danceable)
-        public double acousticness;  // 0.0 (electronic) to 1.0 (acoustic)
+    private MusicVector parseMusicVector(String jsonResponse, String moodInput) {
+        try {
+            String clean = jsonResponse.replace("```json", "").replace("```", "").trim();
+            JSONObject obj = new JSONObject(clean);
+            MusicVector v = new MusicVector();
+            v.energy = obj.optDouble("energy", 0.5);
+            v.tempo = obj.optDouble("tempo", 0.5);
+            v.valence = obj.optDouble("valence", 0.5);
+            v.danceability = obj.optDouble("danceability", 0.5);
+            v.acousticness = obj.optDouble("acousticness", 0.5);
+            return v;
+        } catch (Exception e) {
+            return mapMoodToVector(moodInput);
+        }
+    }
 
-        @Override
-        public String toString() {
-            return "MusicVector{" +
-                    "energy=" + String.format("%.2f", energy) +
-                    ", tempo=" + String.format("%.2f", tempo) +
-                    ", valence=" + String.format("%.2f", valence) +
-                    ", danceability=" + String.format("%.2f", danceability) +
-                    ", acousticness=" + String.format("%.2f", acousticness) +
-                    '}';
+    private MusicVector mapMoodToVector(String mood) {
+        MusicVector v = new MusicVector();
+        String m = mood.toLowerCase();
+        if (m.contains("happy")) { v.valence = 0.9; v.energy = 0.8; }
+        else if (m.contains("sad")) { v.valence = 0.1; v.energy = 0.2; }
+        else { return createNeutralVector(); }
+        return v;
+    }
+
+    private MusicVector createNeutralVector() {
+        MusicVector v = new MusicVector();
+        v.energy = 0.5; v.tempo = 0.5; v.valence = 0.5; v.danceability = 0.5; v.acousticness = 0.5;
+        return v;
+    }
+
+    public interface MusicVectorCallback {
+        void onSuccess(MusicVector vector);
+        void onFailure(Throwable t);
+    }
+
+    public static class MusicVector {
+        public double energy, tempo, valence, danceability, acousticness;
+
+        public String getMood() {
+            if (valence > 0.6) return "Upbeat and Positive";
+            if (valence < 0.4) return "Mellow and Reflective";
+            return "Balanced and Calm";
         }
 
         public Map<String, Double> toMap() {
             Map<String, Double> map = new HashMap<>();
-            map.put("energy", energy);
-            map.put("tempo", tempo);
+            map.put("energy", energy); map.put("tempo", tempo);
             map.put("valence", valence);
-            map.put("danceability", danceability);
-            map.put("acousticness", acousticness);
             return map;
         }
     }

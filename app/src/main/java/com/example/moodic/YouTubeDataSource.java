@@ -1,6 +1,4 @@
-package com.example.moodic.datasource;
-
-import static com.example.moodic.BuildConfig.YouTube_API_KEY;
+package com.example.moodic;
 
 import android.util.Log;
 
@@ -21,6 +19,7 @@ import java.util.List;
 public class YouTubeDataSource {
     private static final String TAG = "YouTubeDataSource";
     private static YouTubeDataSource instance;
+    private static String YouTube_API_KEY;
     private static final String YOUTUBE_API_KEY = YouTube_API_KEY; // Replace with your key
     private static final String YOUTUBE_API_URL = "https://www.googleapis.com/youtube/v3/search";
 
@@ -156,6 +155,7 @@ public class YouTubeDataSource {
 
         return tracks;
     }
+
 
     /**
      * Get YouTube embed URL for a video

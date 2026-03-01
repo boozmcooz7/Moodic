@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.moodic.R;
 import com.example.moodic.AIEngine;
-import com.example.moodic.datasource.YouTubeDataSource;
+import com.example.moodic.YouTubeDataSource;
 import com.example.moodic.models.Track;
 import com.example.moodic.activities.TrackAdapter;
 
@@ -72,9 +72,9 @@ public class ResultsActivity extends AppCompatActivity {
             try {
                 // Step 1: Analyze mood with AIEngine
                 Log.d(TAG, "Step 1: Analyzing mood...");
-                AIEngine.MusicVector vector = AIEngine.getInstance()
-                        .analyzeMoodToVector(userMood);
-                Log.d(TAG, "✅ Music vector created: " + vector);
+//                AIEngine.MusicVector vector = AIEngine.getInstance()
+//                        .analyzeMoodToVector(userMood);
+//                Log.d(TAG, "✅ Music vector created: " + vector);
 
                 // Step 2: Search YouTube for tracks
                 Log.d(TAG, "Step 2: Searching YouTube...");
@@ -85,7 +85,7 @@ public class ResultsActivity extends AppCompatActivity {
                 // Step 3: Update UI on main thread
                 runOnUiThread(() -> {
                     showLoading(false);
-                    displayResults(vector, tracks);
+                    //displayResults(vector, tracks);
                 });
 
             } catch (Exception e) {

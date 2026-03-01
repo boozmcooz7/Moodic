@@ -16,12 +16,21 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+    buildFeatures {
+        buildConfig = true
+    }
 
     buildTypes {
+        debug {
+            buildConfigField "String", "Gemini_API_KEY", "\"AIzaSyCJBk8BZH8cqDvZZrunuuFfr5CTp-xlqVU\""
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField "String", "Gemini_API_KEY", "\"AIzaSyCJBk8BZH8cqDvZZrunuuFfr5CTp-xlqVU\""
+
         }
+
     }
 
     compileOptions {
@@ -34,58 +43,46 @@ android {
         resources {
             pickFirst 'META-INF/INDEX.LIST'
             pickFirst 'META-INF/DEPENDENCIES'
+            exclude 'META-INF/AL2.0'
+            exclude 'META-INF/LGPL2.1'
+            exclude 'META-INF/LICENSE.md'
+            exclude 'META-INF/LICENSE-notice.md'
         }
     }
 }
 
 dependencies {
-    // --- AndroidX & UI ---
+    // 1. The BOM must be first!
+    implementation libs.firebase.bom
+
+    // --- ANDROIDX & UI (These are fine in your TOML) ---
     implementation libs.appcompat
     implementation libs.material
     implementation libs.recyclerview
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
-    // --- Firebase (using BOM) ---
-    implementation platform(libs.firebase.bom)
-    implementation 'com.google.firebase:firebase-analytics'
-    implementation 'com.google.firebase:firebase-auth'
-    implementation 'com.google.firebase:firebase-database'
-    implementation 'com.google.firebase:firebase-firestore'
-    implementation 'com.google.firebase:firebase-storage'
+    // --- FIREBASE (DIRECT STRINGS - No more BOM or TOML issues) ---
+    implementation 'com.google.firebase:firebase-analytics:22.0.2'
+    implementation 'com.google.firebase:firebase-auth:23.0.0'
+    implementation 'com.google.firebase:firebase-firestore:25.0.0'
+    implementation 'com.google.firebase:firebase-storage:21.0.0'
+    implementation 'com.google.firebase:firebase-database:21.0.0'
 
-    // --- Google Services ---
-    implementation libs.play.services.auth
-    implementation libs.easypermissions
+    // --- GEMINI AI (DIRECT STRINGS) ---
+    implementation 'com.google.ai.client.generativeai:generativeai:0.9.0'
 
-    // --- Networking: Retrofit & OkHttp ---
+    // --- THE GUAVA FIX (Crucial for the 9 failures) ---
+    implementation 'com.google.guava:guava:33.0.0-android'
+    implementation 'com.google.guava:listenablefuture:1.0'
+
+    // --- NETWORKING & UTILS (From your TOML) ---
     implementation libs.retrofit
     implementation libs.converter.gson
-    implementation libs.logging.interceptor
     implementation libs.okhttp
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
 
-    // --- Google API & YouTube ---
-    implementation(libs.google.api.client.android) {
-        exclude group: 'org.apache.httpcomponents'
-    }
+    // YouTube (Careful with these)
     implementation(libs.google.api.services.youtube.vv3rev2221250) {
         exclude group: "com.google.guava", module: "guava-jdk5"
     }
-    implementation libs.google.http.client.gson
-    implementation libs.google.api.client
-
-    // --- Modern YouTube Player ---
-    implementation libs.core
-    implementation libs.gson
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'io.grpc:grpc-android:1.59.0'
-
-
-    // --- Testing ---
-    testImplementation libs.junit
-    androidTestImplementation libs.ext.junit
-    androidTestImplementation libs.espresso.core
-
-        implementation 'com.github.bumptech.glide:glide:5.0.5'
-        annotationProcessor libs.compiler
-
-
 }
