@@ -1,13 +1,10 @@
 package com.example.moodic.data;
 
 import android.util.Log;
-
+import com.example.moodic.BuildConfig;
 import com.example.moodic.models.Track;
-
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -19,155 +16,88 @@ import java.util.List;
 public class YouTubeDataSource {
     private static final String TAG = "YouTubeDataSource";
     private static YouTubeDataSource instance;
-    private static String YouTube_API_KEY;
-    private static final String YOUTUBE_API_KEY = YouTube_API_KEY; // Replace with your key
-    private static final String YOUTUBE_API_URL = "https://www.googleapis.com/youtube/v3/search";
+    private static final String API_KEY = BuildConfig.Gemini_API_KEY;
+    private static final String BASE_URL = "https://www.googleapis.com/youtube/v3/search";
 
-    private YouTubeDataSource() {
-    }
+    private YouTubeDataSource() {}
 
-    public static YouTubeDataSource getInstance() {
+    public static synchronized YouTubeDataSource getInstance() {
         if (instance == null) {
             instance = new YouTubeDataSource();
         }
         return instance;
     }
 
-    /**
-     * Search for music tracks on YouTube based on query
-     * @param query Search query (e.g., "happy music" or "sad piano")
-     * @param maxResults Number of results to return
-     * @return List of Track objects
-     */
-    public List<Track> searchTracks(String query, int maxResults) {
-        List<Track> tracks = new ArrayList<>();
-
-        try {
-            String searchQuery = buildSearchQuery(query, maxResults);
-            String response = makeHttpRequest(searchQuery);
-            tracks = parseYouTubeResponse(response);
-            Log.d(TAG, "✅ Found " + tracks.size() + " tracks for query: " + query);
-        } catch (Exception e) {
-            Log.e(TAG, "❌ Error searching tracks", e);
-        }
-
-        return tracks;
-    }
-
-    /**
-     * Search for tracks based on mood and genre
-     */
     public List<Track> searchByMoodAndGenre(String mood, String genre) {
-        String query = mood + " " + genre + " music";
-        return searchTracks(query, 10);
+        return fetchFromYouTube(mood + " " + genre + " music");
     }
 
-    /**
-     * Build the YouTube API search query URL
-     */
-    private String buildSearchQuery(String query, int maxResults) throws Exception {
-        String encodedQuery = URLEncoder.encode(query, "UTF-8");
-
-        return YOUTUBE_API_URL +
-                "?part=snippet" +
-                "&q=" + encodedQuery +
-                "&type=video" +
-                "&maxResults=" + maxResults +
-                "&key=" + YOUTUBE_API_KEY +
-                "&order=relevance";
+    public List<Track> searchTracks(String query, int maxResults) {
+        return fetchFromYouTube(query);
     }
 
-    /**
-     * Make HTTP GET request to YouTube API
-     */
-    private String makeHttpRequest(String urlString) throws Exception {
-        StringBuilder response = new StringBuilder();
-
-        URL url = new URL(urlString);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-        conn.setConnectTimeout(5000);
-        conn.setReadTimeout(5000);
-
-        int responseCode = conn.getResponseCode();
-        Log.d(TAG, "Response code: " + responseCode);
-
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
-            }
-            reader.close();
-        } else {
-            Log.e(TAG, "HTTP Error: " + responseCode);
-            return "{}";
-        }
-
-        conn.disconnect();
-        return response.toString();
-    }
-
-    /**
-     * Parse YouTube API response and convert to Track objects
-     */
-    private List<Track> parseYouTubeResponse(String jsonResponse) throws JSONException {
+    private List<Track> fetchFromYouTube(String query) {
         List<Track> tracks = new ArrayList<>();
+        HttpURLConnection conn = null;
+        try {
+            String encodedQuery = URLEncoder.encode(query, "UTF-8");
 
-        JSONObject json = new JSONObject(jsonResponse);
-        JSONArray items = json.optJSONArray("items");
+            // 🔥 FIX: Simplified URL. Removed videoCategoryId=10 as it often causes 400 errors
+            // if the API key doesn't have specific permissions or in certain regions.
+            String urlString = BASE_URL + "?part=snippet" +
+                    "&type=video" +
+                    "&maxResults=10" +
+                    "&q=" + encodedQuery +
+                    "&key=" + API_KEY;
 
-        if (items == null) {
-            Log.e(TAG, "No items found in response");
-            return tracks;
-        }
+            URL url = new URL(urlString);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
 
-        for (int i = 0; i < items.length(); i++) {
-            try {
-                JSONObject item = items.getJSONObject(i);
+            int responseCode = conn.getResponseCode();
+            Log.d(TAG, "📡 Sending Request: " + urlString);
+            Log.d(TAG, "📡 Response Code: " + responseCode);
 
-                // Extract video ID
-                String videoId = item.getJSONObject("id").getString("videoId");
+            if (responseCode == 200) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) sb.append(line);
 
-                // Extract snippet info
-                JSONObject snippet = item.getJSONObject("snippet");
-                String title = snippet.getString("title");
-                String description = snippet.getString("description");
-                String channelTitle = snippet.getString("channelTitle");
-                String thumbnail = snippet.getJSONObject("thumbnails")
-                        .getJSONObject("default").getString("url");
+                JSONObject json = new JSONObject(sb.toString());
+                JSONArray items = json.optJSONArray("items");
 
-                // Create Track object
-                Track track = new Track();
-                track.setId(videoId);
-                track.setTitle(title);
-                track.setArtist(channelTitle);
-                track.setDescription(description);
-                track.setThumbnailUrl(thumbnail);
-                track.setYoutubeUrl("https://www.youtube.com/watch?v=" + videoId);
+                if (items != null) {
+                    for (int i = 0; i < items.length(); i++) {
+                        JSONObject obj = items.getJSONObject(i);
+                        JSONObject snippet = obj.getJSONObject("snippet");
+                        String videoId = obj.getJSONObject("id").getString("videoId");
 
-                tracks.add(track);
-
-            } catch (JSONException e) {
-                Log.e(TAG, "Error parsing item " + i, e);
+                        Track track = new Track();
+                        track.setId(videoId);
+                        track.setTitle(snippet.getString("title"));
+                        track.setArtist(snippet.getString("channelTitle"));
+                        track.setThumbnailUrl(snippet.getJSONObject("thumbnails").getJSONObject("default").getString("url"));
+                        track.setYoutubeUrl("https://www.youtube.com/watch?v=" + videoId);
+                        tracks.add(track);
+                    }
+                }
+            } else {
+                // 🔍 ERROR DIAGNOSIS: This reads the actual error message from Google
+                BufferedReader errorReader = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+                StringBuilder errorSb = new StringBuilder();
+                String errorLine;
+                while ((errorLine = errorReader.readLine()) != null) errorSb.append(errorLine);
+                Log.e(TAG, "❌ YouTube API Error Detail: " + errorSb.toString());
             }
+
+        } catch (Exception e) {
+            Log.e(TAG, "❌ YouTube Search Exception: " + e.getMessage());
+        } finally {
+            if (conn != null) conn.disconnect();
         }
-
         return tracks;
-    }
-
-
-    /**
-     * Get YouTube embed URL for a video
-     */
-    public String getEmbedUrl(String videoId) {
-        return "https://www.youtube.com/embed/" + videoId;
-    }
-
-    /**
-     * Get YouTube watch URL for a video
-     */
-    public String getWatchUrl(String videoId) {
-        return "https://www.youtube.com/watch?v=" + videoId;
     }
 }

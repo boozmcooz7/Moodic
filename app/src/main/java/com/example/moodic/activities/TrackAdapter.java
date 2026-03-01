@@ -9,7 +9,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -22,17 +21,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHolder> {
-    private List<Track> tracks;
     private Context context;
+    private List<Track> trackList = new ArrayList<>();
 
     public TrackAdapter(Context context) {
         this.context = context;
-        this.tracks = new ArrayList<>();
     }
 
     public void setTracks(List<Track> tracks) {
-        this.tracks = tracks;
+        this.trackList = tracks;
         notifyDataSetChanged();
+    }
+
+    @Override
+    public int getItemCount() {
+        return trackList != null ? trackList.size() : 0;
     }
 
     @NonNull
@@ -44,49 +47,30 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
 
     @Override
     public void onBindViewHolder(@NonNull TrackViewHolder holder, int position) {
-        Track track = tracks.get(position);
+        Track track = trackList.get(position);
 
+        // ✅ FIXED: Used 'title' and 'artist' to match your ViewHolder definition
         holder.title.setText(track.getTitle());
         holder.artist.setText(track.getArtist());
 
-        // Optimized Image Loading
+        // Load Thumbnail (Glide)
         if (track.getThumbnailUrl() != null && !track.getThumbnailUrl().isEmpty()) {
-            Glide.with(context)
-                    .load(track.getThumbnailUrl())
-                    .placeholder(R.drawable.rounded_info_box) // Fallback while loading
-                    .into(holder.thumbnail);
+            Glide.with(context).load(track.getThumbnailUrl()).into(holder.thumbnail);
+        } else {
+             //holder.thumbnail.setImageResource(R.drawable.ic_music_note); // Fallback icon
         }
 
-        // IMPROVED: Direct YouTube Launch
+        // Play Button Click
         holder.playButton.setOnClickListener(v -> {
-            String url = track.getYoutubeUrl();
-            if (url != null && !url.isEmpty()) {
-                try {
-                    // Try to launch the YouTube app directly
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    context.startActivity(intent);
-                } catch (Exception e) {
-                    // If YouTube app isn't installed, launch in browser
-                    Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                    context.startActivity(webIntent);
-                }
-            } else {
-                Toast.makeText(context, "Link not available", Toast.LENGTH_SHORT).show();
-            }
+            Intent intent = new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("https://www.youtube.com/watch?v=" + track.getId()));
+            context.startActivity(intent);
         });
 
+        // Favorite Button Click
         holder.favoriteButton.setOnClickListener(v -> {
-            holder.favoriteButton.setText("❤️ Favorited");
-            holder.favoriteButton.setEnabled(false);
-            // TODO: Use FirebaseManager.getInstance().saveFavorite(track) here
-            Toast.makeText(context, "Saved to favorites!", Toast.LENGTH_SHORT).show();
+            // Future: Add your Firebase favorite logic here
         });
-    }
-
-    @Override
-    public int getItemCount() {
-        return tracks.size();
     }
 
     public static class TrackViewHolder extends RecyclerView.ViewHolder {
@@ -98,6 +82,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
 
         public TrackViewHolder(@NonNull View itemView) {
             super(itemView);
+            // ✅ These IDs must match your item_track.xml exactly
             thumbnail = itemView.findViewById(R.id.trackThumbnail);
             title = itemView.findViewById(R.id.trackTitle);
             artist = itemView.findViewById(R.id.trackArtist);

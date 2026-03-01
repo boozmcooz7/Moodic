@@ -2,6 +2,7 @@ package com.example.moodic.activities;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -24,10 +25,10 @@ public class YouTubeSearchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_youtube_search);
 
-        // Initialize YouTubeDataSource
+        // 1. Initialize DataSource
         youtubeDataSource = YouTubeDataSource.getInstance();
 
-        // Get UI elements
+        // 2. Get UI elements
         EditText searchInput = findViewById(R.id.searchInput);
         Button searchButton = findViewById(R.id.searchButton);
         ProgressBar loadingBar = findViewById(R.id.loadingBar);
@@ -35,36 +36,38 @@ public class YouTubeSearchActivity extends AppCompatActivity {
         searchButton.setOnClickListener(v -> {
             String query = searchInput.getText().toString().trim();
 
-            // Validate input
             if (query.isEmpty()) {
                 Toast.makeText(this, "Please enter a search query", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Show loading indicator
-            loadingBar.setVisibility(android.view.View.VISIBLE);
+            loadingBar.setVisibility(View.VISIBLE);
             searchButton.setEnabled(false);
 
-            // Search in background thread
+            // 3. Search in background thread
             new Thread(() -> {
-                Log.d(TAG, "Searching for: " + query);
+                Log.d(TAG, "🔍 Starting search for: " + query);
+
+                // IMPORTANT: Ensure your YouTubeDataSource has searchTracks(String, int)
                 List<Track> results = youtubeDataSource.searchTracks(query, 10);
 
                 runOnUiThread(() -> {
-                    loadingBar.setVisibility(android.view.View.GONE);
+                    loadingBar.setVisibility(View.GONE);
                     searchButton.setEnabled(true);
 
-                    if (results.isEmpty()) {
+                    if (results == null || results.isEmpty()) {
                         Toast.makeText(YouTubeSearchActivity.this,
-                                "No results found", Toast.LENGTH_SHORT).show();
+                                "No songs found. Check API key/Network.", Toast.LENGTH_LONG).show();
                     } else {
                         Toast.makeText(YouTubeSearchActivity.this,
-                                "Found " + results.size() + " tracks", Toast.LENGTH_SHORT).show();
+                                "Found " + results.size() + " tracks!", Toast.LENGTH_SHORT).show();
 
-                        // Display results (you can use a RecyclerView here)
+                        // Log results to console
                         for (Track track : results) {
-                            Log.d(TAG, "Track: " + track.getTitle() + " by " + track.getArtist());
+                            Log.d(TAG, "🎵 Found: " + track.getTitle() + " [" + track.getId() + "]");
                         }
+
+                        // NEXT STEP: Pass these results to your RecyclerView adapter
                     }
                 });
             }).start();

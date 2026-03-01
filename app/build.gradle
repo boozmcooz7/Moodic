@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace 'com.example.moodic'
-    compileSdk 36
+    compileSdk 36 // Latest 2026 Standard
 
     defaultConfig {
         applicationId "com.example.moodic"
@@ -13,9 +13,9 @@ android {
         targetSdk 36
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+
     buildFeatures {
         buildConfig = true
     }
@@ -28,9 +28,7 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             buildConfigField "String", "Gemini_API_KEY", "\"AIzaSyCJBk8BZH8cqDvZZrunuuFfr5CTp-xlqVU\""
-
         }
-
     }
 
     compileOptions {
@@ -38,7 +36,6 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    // Fix duplicate META-INF files
     packagingOptions {
         resources {
             pickFirst 'META-INF/INDEX.LIST'
@@ -52,34 +49,37 @@ android {
 }
 
 dependencies {
-    // 1. The BOM must be first!
-    implementation libs.firebase.bom
+    // 1. FIREBASE BoM (Bill of Materials) - Updated to March 2026 Stable
+    implementation platform("com.google.firebase:firebase-bom:34.10.0")
 
-    // --- ANDROIDX & UI (These are fine in your TOML) ---
+    // 2. CORE LIBRARIES (From your Catalog/TOML)
     implementation libs.appcompat
     implementation libs.material
     implementation libs.recyclerview
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
-    // --- FIREBASE (DIRECT STRINGS - No more BOM or TOML issues) ---
-    implementation 'com.google.firebase:firebase-analytics:22.0.2'
-    implementation 'com.google.firebase:firebase-auth:23.0.0'
-    implementation 'com.google.firebase:firebase-firestore:25.0.0'
-    implementation 'com.google.firebase:firebase-storage:21.0.0'
-    implementation 'com.google.firebase:firebase-database:21.0.0'
-    implementation("com.google.firebase:firebase-ai")
+    // 3. FIREBASE SERVICES (Using BoM for version control)
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-firestore'
+    implementation 'com.google.firebase:firebase-storage'
+    implementation 'com.google.firebase:firebase-database'
 
-    // --- THE GUAVA FIX (Crucial for the 9 failures) ---
+    // 4. THE AI FIX: Specifically for Firebase AI Logic
+    implementation 'com.google.firebase:firebase-ai'
+
+    // 5. THE JAVA FIX: Guava is mandatory for GenerativeModelFutures
+    // This resolves the "Cannot find symbol ListenableFuture" errors
     implementation 'com.google.guava:guava:33.0.0-android'
-    implementation 'com.google.guava:listenablefuture:1.0'
+    implementation 'com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava'
 
-    // --- NETWORKING & UTILS (From your TOML) ---
+    // 6. NETWORKING & UTILS
     implementation libs.retrofit
     implementation libs.converter.gson
     implementation libs.okhttp
     implementation 'com.github.bumptech.glide:glide:4.16.0'
 
-    // YouTube (Careful with these)
+    // 7. YOUTUBE API (With careful exclusion to prevent library clashing)
     implementation(libs.google.api.services.youtube.vv3rev2221250) {
         exclude group: "com.google.guava", module: "guava-jdk5"
     }

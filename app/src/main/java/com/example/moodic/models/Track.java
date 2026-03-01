@@ -1,17 +1,18 @@
 package com.example.moodic.models;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class Track {
-    private String id;              // YouTube video ID
-    private String title;           // Song title
-    private String artist;          // Artist/Channel name
-    private String description;     // Song description
-    private String genre;           // Music genre
-    private long duration;          // Duration in seconds
-    private String thumbnailUrl;    // Thumbnail image URL
-    private String youtubeUrl;      // Full YouTube URL
-    private List<String> tags;      // Tags/keywords
+public class Track implements Serializable {
+    private String id;
+    private String title;
+    private String artist;
+    private String description;
+    private String genre;
+    private long duration;
+    private String thumbnailUrl;
+    private String youtubeUrl;
+    private List<String> tags;    // Tags/keywords
 
     // Default constructor (required for Firestore)
     public Track() {

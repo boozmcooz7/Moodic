@@ -4,19 +4,18 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.speech.RecognizerIntent;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
-import android.view.View;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -31,25 +30,17 @@ import com.google.firebase.auth.FirebaseAuth;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * ✅ MoodInputActivity with Emulator Support
- * - Works on real device WITH speech-to-text
- * - Works on emulator WITHOUT speech-to-text
- * - Manual text input fallback
- */
 public class MoodInputActivity extends AppCompatActivity {
     private static final String TAG = "MoodInputActivity";
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
     private static final int SPEECH_REQUEST_CODE = 100;
 
-    // UI Elements
     private EditText moodInput;
     private Spinner genreSpinner;
     private ImageButton micButton;
     private Button analyzeButton;
     private ProgressBar progressBar;
 
-    // Firebase & Managers
     private FirebaseAuth mAuth;
     private NotificationManager notificationManager;
 
@@ -61,21 +52,13 @@ public class MoodInputActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         notificationManager = new NotificationManager(this);
 
-        // Initialize UI elements
         initializeUI();
-
-        // Setup listeners
         setupListeners();
-
-        // Show emulator warning if needed
         checkEmulatorAndWarn();
 
         Log.d(TAG, "✅ MoodInputActivity initialized");
     }
 
-    /**
-     * Initialize all UI elements
-     */
     private void initializeUI() {
         moodInput = findViewById(R.id.moodInput);
         genreSpinner = findViewById(R.id.genreSpinner);
@@ -84,11 +67,7 @@ public class MoodInputActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.loadingBar);
     }
 
-    /**
-     * Setup button listeners
-     */
     private void setupListeners() {
-        // Microphone button - tries STT, falls back to manual input
         micButton.setOnClickListener(v -> {
             if (isEmulator()) {
                 showEmulatorInputDialog();
@@ -97,13 +76,9 @@ public class MoodInputActivity extends AppCompatActivity {
             }
         });
 
-        // Analyze button
         analyzeButton.setOnClickListener(v -> saveMoodEntry());
     }
 
-    /**
-     * Check if running on emulator
-     */
     private boolean isEmulator() {
         return Build.FINGERPRINT.contains("generic") ||
                 Build.FINGERPRINT.contains("unknown") ||
@@ -111,159 +86,76 @@ public class MoodInputActivity extends AppCompatActivity {
                 Build.MODEL.contains("Android SDK");
     }
 
-    /**
-     * Show warning for emulator users
-     */
     private void checkEmulatorAndWarn() {
         if (isEmulator()) {
-            Log.w(TAG, "⚠️ Running on emulator - Speech Recognition not available");
-            Toast.makeText(this, "💡 Emulator detected: Type mood or click mic for quick input",
-                    Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "💡 Emulator mode: Quick input enabled", Toast.LENGTH_SHORT).show();
         }
     }
 
-    /**
-     * Show input dialog for emulator users
-     */
     private void showEmulatorInputDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Quick Mood Input");
-        builder.setMessage("Emulator detected. Tap a mood or type your own:");
-
-        // Quick mood buttons
         String[] quickMoods = {"Happy", "Sad", "Energetic", "Calm", "Focused"};
-        builder.setItems(quickMoods, (dialog, which) -> {
-            moodInput.setText(quickMoods[which].toLowerCase());
-        });
-
-        builder.setNegativeButton("Type Custom", (dialog, which) -> {
-            // Just let user type in EditText - dialog closes
-            moodInput.requestFocus();
-        });
-
+        builder.setItems(quickMoods, (dialog, which) -> moodInput.setText(quickMoods[which]));
+        builder.setNegativeButton("Cancel", null);
         builder.show();
     }
 
-    /**
-     * Start speech recognition (device only)
-     */
     private void startSpeechRecognition() {
-        Log.d(TAG, "🎤 Starting speech recognition...");
-
-        // Check permission
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO)
-                    != PackageManager.PERMISSION_GRANTED) {
-                Log.d(TAG, "⚠️ Requesting RECORD_AUDIO permission");
-                ActivityCompat.requestPermissions(
-                        this,
-                        new String[]{android.Manifest.permission.RECORD_AUDIO},
-                        REQUEST_RECORD_AUDIO_PERMISSION
-                );
-                return;
-            }
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO_PERMISSION);
+            return;
         }
-
         startListening();
     }
 
-    /**
-     * Actually start the speech recognizer
-     */
     private void startListening() {
         try {
             Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-            intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 5000);
-            intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
             intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Tell me your mood");
-
-            Toast.makeText(this, "🎤 Listening... Speak your mood", Toast.LENGTH_SHORT).show();
             startActivityForResult(intent, SPEECH_REQUEST_CODE);
-            Log.d(TAG, "🎤 Speech recognition started");
         } catch (Exception e) {
-            Log.e(TAG, "❌ Error starting speech recognizer", e);
-            Toast.makeText(this, "Speech not available. Please type your mood.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Speech not available", Toast.LENGTH_SHORT).show();
         }
     }
 
-    /**
-     * Handle speech recognition results
-     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == SPEECH_REQUEST_CODE) {
-            if (resultCode == RESULT_OK && data != null) {
-                ArrayList<String> results = data.getStringArrayListExtra(
-                        RecognizerIntent.EXTRA_RESULTS);
-
-                if (results != null && !results.isEmpty()) {
-                    String recognizedText = results.get(0);
-                    Log.d(TAG, "✅ Recognized: " + recognizedText);
-                    moodInput.setText(recognizedText);
-                    Toast.makeText(this, "Mood: " + recognizedText, Toast.LENGTH_SHORT).show();
-                }
-            } else {
-                Toast.makeText(this, "Speech recognition failed. Please type your mood.",
-                        Toast.LENGTH_SHORT).show();
+        if (requestCode == SPEECH_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+            ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+            if (results != null && !results.isEmpty()) {
+                moodInput.setText(results.get(0));
             }
         }
     }
 
-    /**
-     * Handle permission result
-     */
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Log.d(TAG, "✅ RECORD_AUDIO permission granted");
-                startListening();
-            } else {
-                Toast.makeText(this, "Microphone permission required", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
-    /**
-     * Save mood entry
-     */
     private void saveMoodEntry() {
         String mood = moodInput.getText().toString().trim();
         String genre = genreSpinner.getSelectedItem().toString();
 
-        // Validation
-        if (mood.isEmpty()) {
-            Toast.makeText(this, "Please enter your mood", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (mood.length() < 2) {
-            Toast.makeText(this, "Please enter a longer mood description", Toast.LENGTH_SHORT).show();
+        if (mood.isEmpty() || mood.length() < 2) {
+            Toast.makeText(this, "Please describe your mood", Toast.LENGTH_SHORT).show();
             return;
         }
 
         progressBar.setVisibility(View.VISIBLE);
         analyzeButton.setEnabled(false);
 
-        String uid = mAuth.getCurrentUser().getUid();
+        String uid = mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getUid() : "anonymous";
         long timestamp = System.currentTimeMillis();
 
-        // Run on background thread
         new Thread(() -> {
             try {
-                // Step 1: Save mood entry to Firebase
-                Log.d(TAG, "💾 Saving mood to Firebase: " + mood);
+                // 1. Firebase Save (Optional: you can comment this if Firebase quota is also low)
                 InputProcessor.processMoodInput(uid, mood, genre, "", timestamp);
 
-                // Step 2: Get music vector from AIEngine
-                Log.d(TAG, "🤖 Analyzing mood with Gemini AI...");
-                AIEngine.getInstance().analyzeMoodToVector(mood, new AIEngine.MusicVectorCallback() {
+                // 2. AI Analysis
+                Log.d(TAG, "🤖 Attempting AI Analysis...");
+                AIEngine.getInstance().analyzeMood(mood, new AIEngine.MusicVectorCallback() {
                     @Override
                     public void onSuccess(AIEngine.MusicVector vector) {
                         handleMoodAnalysisSuccess(mood, genre, vector);
@@ -271,82 +163,96 @@ public class MoodInputActivity extends AppCompatActivity {
 
                     @Override
                     public void onFailure(Throwable t) {
-                        handleMoodAnalysisError(t, mood);
+                        // Check if the error is Quota related
+                        if (t.getMessage() != null && t.getMessage().toLowerCase().contains("quota")) {
+                            Log.w(TAG, "⚠️ Quota Exceeded! Switching to Mock Mode.");
+                            switchToMockMode(mood, genre);
+                        } else {
+                            handleMoodAnalysisError(t, mood);
+                        }
                     }
                 });
             } catch (Exception e) {
-                Log.e(TAG, "❌ Error in saveMoodEntry", e);
-                handleMoodAnalysisError(e, mood);
+                switchToMockMode(mood, genre);
             }
         }).start();
     }
+    private void switchToMockMode(String mood, String genre) {
+        runOnUiThread(() -> {
+            Toast.makeText(this, "Quota Reached: Entering Preview Mode", Toast.LENGTH_LONG).show();
 
+            final ArrayList<Track> mockTracks = new ArrayList<>();
+
+            // Add 3 mock tracks so you can test your list scrolling/UI
+            String[] titles = {"Golden Hour (Mock)", "Starboy (Mock)", "Levitating (Mock)"};
+            String[] artists = {"JVKE", "The Weeknd", "Dua Lipa"};
+
+            for (int i = 0; i < 3; i++) {
+                Track t = new Track();
+                t.setTitle(titles[i]);
+                t.setArtist(artists[i]);
+                t.setId("dQw4w9WgXcQ"); // Standard placeholder ID
+                mockTracks.add(t);
+            }
+
+            progressBar.setVisibility(View.GONE);
+            analyzeButton.setEnabled(true);
+
+            Intent intent = new Intent(MoodInputActivity.this, ResultsActivity.class);
+            intent.putExtra("mood", mood + " (Preview)");
+            intent.putExtra("genre", genre);
+            intent.putExtra("tracks", mockTracks);
+
+            Log.d(TAG, "🚀 Mock Mode: Navigating to ResultsActivity");
+            startActivity(intent);
+        });
+    }
     /**
-     * Handle successful mood analysis
+     * ✅ FIXED: Correctly handles the transition to ResultsActivity
      */
     private void handleMoodAnalysisSuccess(String mood, String genre, AIEngine.MusicVector vector) {
-        try {
-            Log.d(TAG, "✅ Analysis successful: " + vector);
+        // Fetch results in the background
+        List<Track> rawResults = YouTubeDataSource.getInstance().searchByMoodAndGenre(mood, genre);
 
-            // Show notification
-            notificationManager.showSuggestionReadyNotification(mood, vector);
+        // Convert to a final ArrayList to satisfy the Lambda requirement
+        final ArrayList<Track> finalTracks = new ArrayList<>();
 
-            // Search for music
-            YouTubeDataSource youtube = YouTubeDataSource.getInstance();
-            List<Track> tracks = youtube.searchByMoodAndGenre(mood, genre);
-
-            runOnUiThread(() -> {
-                progressBar.setVisibility(View.GONE);
-                analyzeButton.setEnabled(true);
-
-                if (tracks == null || tracks.isEmpty()) {
-                    Toast.makeText(MoodInputActivity.this,
-                            "No tracks found. Try a different mood!", Toast.LENGTH_SHORT).show();
-                } else {
-                    Intent intent = new Intent(MoodInputActivity.this, ResultsActivity.class);
-                    intent.putExtra("mood", mood);
-                    intent.putExtra("genre", genre);
-                    intent.putExtra("vector", (Parcelable) vector.toMap());
-                    intent.putExtra("tracks", (ArrayList) tracks);
-                    startActivity(intent);
-
-                    moodInput.setText("");
-                }
-            });
-        } catch (Exception e) {
-            Log.e(TAG, "❌ Error in success handler", e);
-            handleMoodAnalysisError(e, mood);
+        if (rawResults != null && !rawResults.isEmpty()) {
+            finalTracks.addAll(rawResults);
+            Log.d(TAG, "✅ Found " + finalTracks.size() + " real tracks.");
+        } else {
+            Log.e(TAG, "⚠️ API still blocked or no results. Adding fallback track.");
+            Track fallback = new Track();
+            fallback.setTitle("API Error 403 (Blocked)");
+            fallback.setArtist("Check Cloud Console Project ...388");
+            fallback.setId("dQw4w9WgXcQ");
+            finalTracks.add(fallback);
         }
-    }
 
-    /**
-     * Handle mood analysis error
-     */
-    private void handleMoodAnalysisError(Throwable t, String mood) {
-        Log.e(TAG, "❌ Mood analysis error: " + t.getMessage(), t);
-
+        // Switch to UI Thread
         runOnUiThread(() -> {
             progressBar.setVisibility(View.GONE);
             analyzeButton.setEnabled(true);
 
-            String message = "Analysis failed: ";
+            Intent intent = new Intent(MoodInputActivity.this, ResultsActivity.class);
+            intent.putExtra("mood", mood);
+            intent.putExtra("genre", genre);
 
-            if (t.getMessage() != null && t.getMessage().contains("API")) {
-                message += "Check API key in BuildConfig";
-            } else if (t.getMessage() != null && t.getMessage().contains("network")) {
-                message += "Check internet connection";
-            } else {
-                message += (t.getMessage() != null ? t.getMessage() : "Unknown error");
-            }
+            // Note: Use putParcelableArrayListExtra if Track implements Parcelable
+            // Or just putExtra if it is Serializable
+            intent.putExtra("tracks", finalTracks);
 
-            Log.e(TAG, "Full error: " + message);
-            Toast.makeText(MoodInputActivity.this, message, Toast.LENGTH_LONG).show();
+            Log.d(TAG, "🚀 Navigating to ResultsActivity");
+            startActivity(intent);
         });
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        Log.d(TAG, "🗑️ MoodInputActivity destroyed");
+    private void handleMoodAnalysisError(Throwable t, String mood) {
+        runOnUiThread(() -> {
+            progressBar.setVisibility(View.GONE);
+            analyzeButton.setEnabled(true);
+            Log.e(TAG, "Analysis Error: ", t);
+            switchToMockMode(mood, genreSpinner.getSelectedItem().toString());
+        });
     }
 }

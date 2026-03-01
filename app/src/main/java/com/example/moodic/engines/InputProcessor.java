@@ -12,7 +12,7 @@ public class InputProcessor {
     public static void processMoodInput(String uid, String mood, String genre, String trackName, long timestamp) {
         Log.d(TAG, "Processing mood input: " + mood);
 
-        AIEngine.getInstance().analyzeMoodToVector(mood, new AIEngine.MusicVectorCallback() {
+        AIEngine.getInstance().analyzeMood(mood, new AIEngine.MusicVectorCallback() {
             @Override
             public void onSuccess(AIEngine.MusicVector vector) {
                 Log.d(TAG, "✅ Music vector created: " + vector);
