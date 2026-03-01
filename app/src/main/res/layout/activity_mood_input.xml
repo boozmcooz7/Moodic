@@ -1,48 +1,97 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <LinearLayout
-xmlns:android="http://schemas.android.com/apk/res/android"
-android:layout_width="match_parent"
-android:layout_height="match_parent"
-android:orientation="vertical"
-android:padding="16dp">
-
-<EditText
-    android:id="@+id/moodInput"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:hint="Enter your mood..." />
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
 
-<TextView
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="Select Genre:"
-    android:textStyle="bold"
-    android:layout_marginTop="16dp" />
+    <!-- Title -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="How are you feeling?"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="32dp"
+        android:textAlignment="center" />
 
-<Spinner
-    android:id="@+id/genreSpinner"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:entries="@array/genre_array" />
+    <!-- Mood Input -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="1. Enter Your Mood"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
 
-<EditText
-    android:id="@+id/trackInput"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:hint="Enter track name..."
-    android:layout_marginTop="16dp" />
+    <EditText
+        android:id="@+id/moodInput"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:hint="e.g., happy, sad, energetic, calm..."
+        android:inputType="text"
+        android:padding="16dp"
+        android:layout_marginBottom="24dp" />
 
-<Button
-    android:id="@+id/analyzeButton"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="Save Mood"
-    android:layout_marginTop="16dp" />
+    <!-- Genre Selection -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="2. Select Genre"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <Spinner
+        android:id="@+id/genreSpinner"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:entries="@array/genre_array"
+        android:layout_marginBottom="24dp"
+        android:padding="16dp" />
+
+    <!-- Track Name (Optional) -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="3. Track Name (Optional)"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/trackInput"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:hint="Leave empty to get recommendations"
+        android:inputType="text"
+        android:padding="16dp"
+        android:layout_marginBottom="32dp" />
+
+    <!-- Loading Spinner -->
     <ProgressBar
         android:id="@+id/loadingBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="24dp"
         android:visibility="gone" />
+
+    <!-- Spacer -->
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- Analyze Button -->
+    <Button
+        android:id="@+id/analyzeButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="🎵 Get Recommendations"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:backgroundTint="#6200EE" />
 
 </LinearLayout>

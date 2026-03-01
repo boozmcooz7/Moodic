@@ -28,6 +28,10 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".activities.SignUpActivity"
+            android:exported="false" />
+
         <!-- Main Activity - Navigation Hub -->
         <activity
             android:name=".activities.MainActivity"

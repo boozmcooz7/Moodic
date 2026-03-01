@@ -43,7 +43,27 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
     @Override
     public void onBindViewHolder(@NonNull TrackViewHolder holder, int position) {
         Track track = tracks.get(position);
-        holder.bind(track);
+
+        holder.title.setText(track.getTitle());
+        holder.artist.setText(track.getArtist());
+
+        if (track.getThumbnailUrl() != null && !track.getThumbnailUrl().isEmpty()) {
+            Glide.with(context)
+                    .load(track.getThumbnailUrl())
+                    .into(holder.thumbnail);
+        }
+
+        holder.playButton.setOnClickListener(v -> {
+            Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
+            intent.setData(android.net.Uri.parse(track.getYoutubeUrl()));
+            context.startActivity(intent);
+        });
+
+        holder.favoriteButton.setOnClickListener(v -> {
+            holder.favoriteButton.setText("❤️ Favorited");
+            holder.favoriteButton.setEnabled(false);
+            // TODO: Save to Firebase favorites
+        });
     }
 
     @Override
@@ -52,11 +72,11 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
     }
 
     public class TrackViewHolder extends RecyclerView.ViewHolder {
-        private ImageView thumbnail;
-        private TextView title;
-        private TextView artist;
-        private Button playButton;
-        private Button favoriteButton;
+        public ImageView thumbnail;
+        public TextView title;
+        public TextView artist;
+        public Button playButton;
+        public Button favoriteButton;
 
         public TrackViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -65,33 +85,6 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
             artist = itemView.findViewById(R.id.trackArtist);
             playButton = itemView.findViewById(R.id.playButton);
             favoriteButton = itemView.findViewById(R.id.favoriteButton);
-        }
-
-        public void bind(Track track) {
-            // Set text
-            title.setText(track.getTitle());
-            artist.setText(track.getArtist());
-
-            // Load thumbnail with Glide
-            if (track.getThumbnailUrl() != null && !track.getThumbnailUrl().isEmpty()) {
-                Glide.with(context)
-                        .load(track.getThumbnailUrl())
-                        .into(thumbnail);
-            }
-
-            // Play button - open YouTube
-            playButton.setOnClickListener(v -> {
-                Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
-                intent.setData(android.net.Uri.parse(track.getYoutubeUrl()));
-                context.startActivity(intent);
-            });
-
-            // Favorite button - save to Firebase (TODO)
-            favoriteButton.setOnClickListener(v -> {
-                favoriteButton.setText("❤️ Favorited");
-                favoriteButton.setEnabled(false);
-                // TODO: Save to Firebase favorites
-            });
         }
     }
 }

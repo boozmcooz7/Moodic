@@ -51,7 +51,7 @@ public class SignUpActivity extends AppCompatActivity {
             public void onSuccess(String uid) {
                 Toast.makeText(SignUpActivity.this, "Account created!", Toast.LENGTH_SHORT).show();
                 // אם ההרשמה והכתיבה ל-Firestore הצליחו, עוברים מסך
-                startActivity(new Intent(SignUpActivity.this, MoodInputActivity.class));
+                startActivity(new Intent(SignUpActivity.this, MainActivity.class));
                 finish();
             }
 
