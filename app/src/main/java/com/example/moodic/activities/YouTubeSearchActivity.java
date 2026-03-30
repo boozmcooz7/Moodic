@@ -9,6 +9,8 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.moodic.R;
 import com.example.moodic.data.YouTubeDataSource;
@@ -19,6 +21,8 @@ import java.util.List;
 public class YouTubeSearchActivity extends AppCompatActivity {
     private static final String TAG = "YouTubeSearchActivity";
     private YouTubeDataSource youtubeDataSource;
+    private RecyclerView recyclerView;
+    private TrackAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +31,11 @@ public class YouTubeSearchActivity extends AppCompatActivity {
 
         // 1. Initialize DataSource
         youtubeDataSource = YouTubeDataSource.getInstance();
-
+// Inside onCreate
+        recyclerView = findViewById(R.id.recyclerView); // Ensure this ID exists in XML
+        adapter = new TrackAdapter(this);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
         // 2. Get UI elements
         EditText searchInput = findViewById(R.id.searchInput);
         Button searchButton = findViewById(R.id.searchButton);
@@ -55,22 +63,16 @@ public class YouTubeSearchActivity extends AppCompatActivity {
                     loadingBar.setVisibility(View.GONE);
                     searchButton.setEnabled(true);
 
-                    if (results == null || results.isEmpty()) {
-                        Toast.makeText(YouTubeSearchActivity.this,
-                                "No songs found. Check API key/Network.", Toast.LENGTH_LONG).show();
+                    if (results != null && !results.isEmpty()) {
+                        // ✅ THIS IS THE MISSING LINK:
+                        adapter.setTracks(results);
+                        Log.d(TAG, "Adapter updated with " + results.size() + " tracks");
                     } else {
-                        Toast.makeText(YouTubeSearchActivity.this,
-                                "Found " + results.size() + " tracks!", Toast.LENGTH_SHORT).show();
-
-                        // Log results to console
-                        for (Track track : results) {
-                            Log.d(TAG, "🎵 Found: " + track.getTitle() + " [" + track.getId() + "]");
-                        }
-
-                        // NEXT STEP: Pass these results to your RecyclerView adapter
+                        Toast.makeText(this, "No results found.", Toast.LENGTH_SHORT).show();
                     }
                 });
             }).start();
+
         });
     }
 }

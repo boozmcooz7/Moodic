@@ -235,6 +235,19 @@ public class SpeechToTextEngine implements RecognitionListener {
                     Log.d(TAG, "Final result: " + recognizedText);
                     notifyStateChange();
 
+                    // DIRECT PIPE: Send results to AIEngine
+                    AIEngine.getInstance().analyzeMood(recognizedText, new AIEngine.MusicVectorCallback() {
+                        @Override
+                        public void onSuccess(AIEngine.MusicVector vector) {
+                            Log.d(TAG, "✅ Speech piped to AI successfully: " + vector.energy);
+                        }
+
+                        @Override
+                        public void onFailure(Throwable t) {
+                            Log.e(TAG, "❌ AI pipe from speech failed", t);
+                        }
+                    });
+
                     if (onResultListener != null) {
                         onResultListener.onResult(recognizedText);
                     }

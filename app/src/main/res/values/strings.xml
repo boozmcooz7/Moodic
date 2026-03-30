@@ -1,19 +1,26 @@
-    <resources>
-        <string name="app_name_title">MOODIC</string>
-        <string name="app_tagline">Track your mood, discover your rhythm</string>
-        <string name="logo_content_description">MOODIC Logo</string>
-        <string name="enter_your_mood">Enter your mood</string>
-        <string name="submit_mood">Submit Mood</string>
-        <!-- Add other strings here -->
-            <string-array name="genre_array">
-                    <item>Pop</item>
-                    <item>Rock</item>
-                    <item>Jazz</item>
-                    <item>Hip-Hop</item>
-                    <item>Classical</item>
-                    <item>Electronic</item>
-                    <item>RNB</item>
-            </string-array>
-    </resources>
+<resources>
+    <string name="app_name_title">MOODIC</string>
+    <string name="app_tagline">Track your mood, discover your rhythm</string>
+    <string name="logo_content_description">MOODIC Logo</string>
+    <string name="enter_your_mood">Enter your mood</string>
+    <string name="submit_mood">Submit Mood</string>
+    <!-- Add other strings here -->
+    <string-array name="genre_array">
+        <item>Pop</item>
+        <item>Rock</item>
+        <item>Jazz</item>
+        <item>Hip-Hop</item>
+        <item>Classical</item>
+        <item>Electronic</item>
+        <item>RNB</item>
+    </string-array>
+
+    <string name="welcome_format">Welcome, %1$s!</string>
+    <string name="welcome_back">Welcome back!</string>
+    <!-- For the last mood summary (takes 2 arguments: mood and genre) -->
+    <string name="last_mood_format">Last mood: %1$s · %2$s</string>
+    <string name="logout_success">Logged out successfully</string>
+</resources>
+
 
 

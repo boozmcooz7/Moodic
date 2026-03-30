@@ -1,4 +1,3 @@
-
 package com.example.moodic.models;
 
 import java.util.List;
@@ -8,19 +7,18 @@ public class User {
     private String userName;
     private List<String> favoriteGenres;
     private List<Track> favoriteTracks;
-    private double[] dynamicListeningProfile;
+    private List<Double> dynamicListeningProfile;
     private String lastUpdated;
 
     public User() {
     }
 
-    public User(String uid, String userName, List<String> favoriteGenres, List<Track> favoriteTracks, double[] dynamicListeningProfile) {
+    public User(String uid, String userName, List<String> favoriteGenres, List<Track> favoriteTracks, List<Double> dynamicListeningProfile) {
         this.uid = uid;
         this.userName = userName;
         this.favoriteGenres = favoriteGenres;
         this.favoriteTracks = favoriteTracks;
         this.dynamicListeningProfile = dynamicListeningProfile;
-        this.lastUpdated = lastUpdated;
     }
 
 
@@ -56,11 +54,11 @@ public class User {
         this.favoriteTracks = favoriteTracks;
     }
 
-    public double[] getDynamicListeningProfile() {
+    public List<Double> getDynamicListeningProfile() {
         return dynamicListeningProfile;
     }
 
-    public void setDynamicListeningProfile(double[] dynamicListeningProfile) {
+    public void setDynamicListeningProfile(List<Double> dynamicListeningProfile) {
         this.dynamicListeningProfile = dynamicListeningProfile;
     }
     public String getLastUpdated() { return lastUpdated; }

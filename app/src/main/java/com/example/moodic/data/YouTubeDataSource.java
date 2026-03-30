@@ -1,6 +1,7 @@
 package com.example.moodic.data;
 
 import android.util.Log;
+
 import com.example.moodic.BuildConfig;
 import com.example.moodic.models.Track;
 import org.json.JSONArray;
@@ -16,7 +17,6 @@ import java.util.List;
 public class YouTubeDataSource {
     private static final String TAG = "YouTubeDataSource";
     private static YouTubeDataSource instance;
-    private static final String API_KEY = BuildConfig.Gemini_API_KEY;
     private static final String BASE_URL = "https://www.googleapis.com/youtube/v3/search";
 
     private YouTubeDataSource() {}
@@ -28,15 +28,21 @@ public class YouTubeDataSource {
         return instance;
     }
 
-    public List<Track> searchByMoodAndGenre(String mood, String genre) {
-        return fetchFromYouTube(mood + " " + genre + " music");
-    }
+        public List<Track> searchByMoodAndGenre(String mood, String genre) {
+            // 🚀 ARCHITECT'S TIP: YouTube loves the word "official" and "song"
+            // to filter out garbage results.
+            String cleanQuery = mood + " " + genre + " official music song";
+            return fetchFromYouTube(cleanQuery);
+        }
 
     public List<Track> searchTracks(String query, int maxResults) {
         return fetchFromYouTube(query);
     }
 
     private List<Track> fetchFromYouTube(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            query = "trending music 2026"; // Fallback so the user isn't left with an empty screen
+        }
         List<Track> tracks = new ArrayList<>();
         HttpURLConnection conn = null;
         try {
@@ -48,7 +54,7 @@ public class YouTubeDataSource {
                     "&type=video" +
                     "&maxResults=10" +
                     "&q=" + encodedQuery +
-                    "&key=" + API_KEY;
+                    "&key=" + BuildConfig.Test_Key;
 
             URL url = new URL(urlString);
             conn = (HttpURLConnection) url.openConnection();

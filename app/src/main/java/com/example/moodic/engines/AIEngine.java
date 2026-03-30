@@ -1,8 +1,8 @@
 package com.example.moodic.engines;
 
 import android.util.Log;
+
 import com.google.firebase.ai.FirebaseAI;
-import com.google.firebase.ai.GenerativeModel;
 import com.google.firebase.ai.java.GenerativeModelFutures;
 import com.google.firebase.ai.type.Content;
 import com.google.firebase.ai.type.GenerateContentResponse;
@@ -26,18 +26,17 @@ public class AIEngine {
     private final Executor executor = Executors.newSingleThreadExecutor();
 
     private AIEngine() {
-        // 1. FIX: Proper Configuration setup for 2026
         GenerationConfig config = new GenerationConfig.Builder()
-                .setTemperature(1.0f)
+                .setTemperature(0.7f)
                 .setResponseMimeType("application/json")
                 .build();
 
-        // 2. Initialize using the Gemini Developer API backend
-        GenerativeModel gm = FirebaseAI.getInstance(GenerativeBackend.googleAI())
-                .generativeModel("gemini-2.5-flash-lite", config);
-
-        // 3. Wrap for Java Compatibility
-        this.modelFutures = GenerativeModelFutures.from(gm);
+        // 2. Initialize using the Provider Pattern (Satisfies: GenerativeModelProvider)
+        // This looks up the model via the "Google AI" backend inside Firebase
+        this.modelFutures = GenerativeModelFutures.from(
+                FirebaseAI.getInstance(GenerativeBackend.googleAI())
+                        .generativeModel("gemini-2.5-flash-lite", config)
+        );
     }
 
     public static synchronized AIEngine getInstance() {
@@ -45,6 +44,28 @@ public class AIEngine {
             instance = new AIEngine();
         }
         return instance;
+    }
+
+    /**
+     * Synchronous version of mood analysis. 
+     * CAUTION: Must be called from a background thread as it blocks until the AI responds.
+     */
+    public MusicVector analyzeMoodToVector(String moodInput) throws Exception {
+        String prompt = "Analyze the mood: '" + moodInput + "'. " +
+                "Return ONLY a JSON object with these keys: " +
+                "energy, tempo, valence, danceability, acousticness. " +
+                "Values must be between 0.0 and 1.0.";
+
+        Content content = new Content.Builder()
+                .addText(prompt)
+                .build();
+
+        ListenableFuture<GenerateContentResponse> future = modelFutures.generateContent(content);
+        // Blocks and waits for result
+        GenerateContentResponse response = future.get();
+        String resultText = response.getText();
+        Log.d(TAG, "AI Sync Raw Response: " + resultText);
+        return parseJsonToVector(resultText);
     }
 
     public void analyzeMood(String moodInput, MusicVectorCallback callback) {
@@ -86,7 +107,10 @@ public class AIEngine {
 
     // NEW: Helper to turn the AI string into your Data Object
     private MusicVector parseJsonToVector(String json) throws Exception {
-        JSONObject obj = new JSONObject(json);
+        String cleanJson = json.replaceAll("```json", "")
+                .replaceAll("```", "")
+                .trim();
+        JSONObject obj = new JSONObject(cleanJson);
         MusicVector v = new MusicVector();
         v.energy = obj.optDouble("energy", 0.5);
         v.tempo = obj.optDouble("tempo", 0.5);

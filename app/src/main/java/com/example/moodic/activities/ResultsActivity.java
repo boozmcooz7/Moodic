@@ -98,43 +98,66 @@ public class ResultsActivity extends AppCompatActivity {
         AIEngine.getInstance().analyzeMood(userMood, new AIEngine.MusicVectorCallback() {
             @Override
             public void onSuccess(AIEngine.MusicVector vector) {
-                new Thread(() -> {
-                    try {
-                        YouTubeDataSource youtube = YouTubeDataSource.getInstance();
-                        List<Track> tracks = youtube.searchByMoodAndGenre(userMood, userGenre);
-                        runOnUiThread(() -> {
-                            showLoading(false);
-                            displayResults(vector, tracks);
-                        });
-                    } catch (Exception e) {
-                        handleError("YouTube search failed: " + e.getMessage());
-                    }
-                }).start();
-            }
+                Log.d(TAG, "✅ AI Success: " + vector.energy);
+                executeYouTubeSearch(userMood + " " + userGenre, vector);            }
 
             @Override
             public void onFailure(Throwable t) {
-                handleError("AI Analysis failed: " + t.getMessage());
+                Log.e(TAG, "❌ AI Failed: " + t.getMessage());
+                // 🔥 BYPASS: If AI fails, don't show an error Toast. Just fetch music!
+                executeYouTubeSearch(userMood + " " + userGenre, null);
             }
         });
     }
+    private void executeYouTubeSearch(String query, AIEngine.MusicVector vector) {
+        new Thread(() -> {
+            try {
+                // Clean up the query
+                String searchQuery = query + " music song";
+                List<Track> tracks = YouTubeDataSource.getInstance().searchTracks(searchQuery, 10);
 
-    private void displayResults(AIEngine.MusicVector vector, List<Track> tracks) {
-        String vectorInfo = "Energy: " + String.format("%.2f", vector.energy) +
-                " | Tempo: " + String.format("%.2f", vector.tempo) +
-                " | Valence: " + String.format("%.2f", vector.valence);
-
-        vectorDisplay.setText(vectorInfo);
-
-        if (tracks == null || tracks.isEmpty()) {
-            Toast.makeText(this, "No tracks found", Toast.LENGTH_SHORT).show();
-            retryButton.setVisibility(View.VISIBLE);
-        } else {
-            adapter.setTracks(tracks);
-            retryButton.setVisibility(View.GONE);
-        }
+                runOnUiThread(() -> {
+                    showLoading(false);
+                    displayResults(vector, tracks);
+                    if (vector == null) {
+                        Toast.makeText(this, "Showing standard results", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } catch (Exception e) {
+                handleError("Search failed: " + e.getMessage());
+            }
+        }).start();
     }
 
+    private void fetchTracks(AIEngine.MusicVector vector, String queryText) {
+        new Thread(() -> {
+            try {
+                // Append "music" to make the query professional
+                List<Track> tracks = YouTubeDataSource.getInstance().searchTracks(queryText + " music", 10);
+                runOnUiThread(() -> {
+                    showLoading(false);
+                    displayResults(vector, tracks);
+                });
+            } catch (Exception e) {
+                handleError("Network error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+
+        private void displayResults(AIEngine.MusicVector vector, List<Track> tracks) {
+            runOnUiThread(() -> {
+                if (tracks == null || tracks.isEmpty()) {
+                    // This is what you see now because of the 403 error
+                    Log.e("MOODIC", "No tracks to display");
+                } else {
+                    // Once you click ENABLE in the console, this will run!
+                    adapter.setTracks(tracks);
+                    adapter.notifyDataSetChanged();
+                    Log.d("MOODIC", "UI Updated with " + tracks.size() + " songs");
+                }
+            });
+        }
     private void handleError(String message) {
         Log.e(TAG, message);
         runOnUiThread(() -> {

@@ -14,22 +14,15 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField "String", "Test_Key", "\"AIzaSyC7OIDw6HHN2CIoxdomG86OVpj_vo3whs0\""
+        buildConfigField "String", "SHA1", "\"89:F5:00:09:75:CA:6A:20:13:01:25:5F:DC:67:A8:D8:D9:2C:24:C7\""
     }
 
     buildFeatures {
         buildConfig = true
     }
 
-    buildTypes {
-        debug {
-            buildConfigField "String", "Gemini_API_KEY", "\"AIzaSyCJBk8BZH8cqDvZZrunuuFfr5CTp-xlqVU\""
-        }
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            buildConfigField "String", "Gemini_API_KEY", "\"AIzaSyCJBk8BZH8cqDvZZrunuuFfr5CTp-xlqVU\""
-        }
-    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
