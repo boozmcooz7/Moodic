@@ -76,7 +76,7 @@ public class MoodInputActivity extends AppCompatActivity {
         setLoading(true);
 
         // Step 1: Send free-text mood to Gemini via MoodAIHelper (AsyncTask)
-        new MoodAIHelper(BuildConfig.Gemini_API_KEY, new MoodAIHelper.Callback() {
+        new MoodAIHelper(BuildConfig.Test_Key, new MoodAIHelper.Callback() {
 
             @Override
             public void onKeywordsReady(List<String> keywords) {

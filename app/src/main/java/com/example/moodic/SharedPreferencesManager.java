@@ -47,6 +47,16 @@ public class SharedPreferencesManager {
         return instance;
     }
 
+    /**
+     * Overloaded getInstance that ensures initialization if a Context is provided.
+     */
+    public static synchronized SharedPreferencesManager getInstance(Context context) {
+        if (instance == null) {
+            init(context);
+        }
+        return instance;
+    }
+
     // ── User Session ────────────────────────────────────────────────────────
 
     public void setLoggedIn(boolean loggedIn) {
@@ -70,6 +80,11 @@ public class SharedPreferencesManager {
     }
 
     public String getUserName() { return prefs.getString(KEY_USER_NAME, ""); }
+
+    public void clearSession() {
+        prefs.edit().clear().apply();
+        Log.d(TAG, "Session cleared.");
+    }
 
     // ── Favorites Logic ─────────────────────────────────────────────────────
 
@@ -127,10 +142,15 @@ public class SharedPreferencesManager {
                 .apply();
     }
 
+    public boolean hasLastMoodEntry() {
+        return prefs.contains(KEY_LAST_MOOD);
+    }
+
     public String getLastMood() { return prefs.getString(KEY_LAST_MOOD, ""); }
 
+    public String getLastGenre() { return prefs.getString(KEY_LAST_GENRE, ""); }
+
     public void clearAll() {
-        prefs.edit().clear().apply();
-        Log.d(TAG, "Cache wiped.");
+        clearSession();
     }
 }

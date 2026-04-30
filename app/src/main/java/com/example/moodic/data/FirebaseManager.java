@@ -130,7 +130,26 @@ public class FirebaseManager {
     // -----------------------------------------------------------------------
     // User Profile
     // -----------------------------------------------------------------------
+    /**
+     * Updates only the dynamic profile array for a user.
+     */
+    public void updateDynamicProfile(String uid, double[] currentProfile) {
+        if (uid == null || currentProfile == null) return;
 
+        // Firestore does not store raw double arrays well, so convert to List
+        List<Double> profileList = new ArrayList<>();
+        for (double val : currentProfile) {
+            profileList.add(val);
+        }
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("dynamicProfile", profileList);
+
+        db.collection("Users").document(uid)
+                .update(updates)
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "Dynamic profile updated successfully"))
+                .addOnFailureListener(e -> Log.e(TAG, "Failed to update dynamic profile: " + e.getMessage()));
+    }
     public void loadUserProfile(String uid, ProfileLoadListener listener) {
         db.collection("Users").document(uid).get()
                 .addOnSuccessListener(snapshot -> {
