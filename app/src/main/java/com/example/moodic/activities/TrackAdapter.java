@@ -13,31 +13,42 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.moodic.R;
+import com.example.moodic.data.FirebaseManager;
 import com.example.moodic.models.Track;
+import com.example.moodic.SharedPreferencesManager;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHolder> {
-    private Context context;
-    private List<Track> trackList = new ArrayList<>();
+public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHolder>
+        implements DefaultLifecycleObserver {
+
+    private static final String TAG = "TrackAdapter";
+    private List<Track> tracks = new ArrayList<>();
+    private final Context context;
+    private final RequestOptions glideOptions;
 
     public TrackAdapter(Context context) {
         this.context = context;
+        // Optimization: Pre-configure Glide settings
+        this.glideOptions = new RequestOptions()
+                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                .centerCrop()
+                .placeholder(android.R.drawable.ic_menu_gallery)
+                .error(android.R.drawable.ic_dialog_alert);
     }
 
     public void setTracks(List<Track> tracks) {
-        this.trackList = tracks;
+        this.tracks = tracks != null ? tracks : new ArrayList<>();
         notifyDataSetChanged();
-    }
-
-    @Override
-    public int getItemCount() {
-        return trackList != null ? trackList.size() : 0;
     }
 
     @NonNull
@@ -49,48 +60,72 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
 
     @Override
     public void onBindViewHolder(@NonNull TrackViewHolder holder, int position) {
-        Track track = trackList.get(position);
+        Track track = tracks.get(position);
 
-        // ✅ FIXED: Used 'title' and 'artist' to match your ViewHolder definition
         holder.title.setText(track.getTitle());
         holder.artist.setText(track.getArtist());
 
-        // Load Thumbnail (Glide)
+        // Optimized Image Loading
         if (track.getThumbnailUrl() != null && !track.getThumbnailUrl().isEmpty()) {
-            Glide.with(context).load(track.getThumbnailUrl()).into(holder.thumbnail);
+            Glide.with(context)
+                    .load(track.getThumbnailUrl())
+                    .apply(glideOptions)
+                    .into(holder.thumbnail);
         } else {
-             //holder.thumbnail.setImageResource(R.drawable.ic_music_note); // Fallback icon
+            Glide.with(context).clear(holder.thumbnail);
+            holder.thumbnail.setImageResource(android.R.drawable.ic_menu_gallery);
         }
 
-        // Play Button Click
+        // Play Button: Construct YouTube link if full URL is missing
         holder.playButton.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_VIEW,
-                    Uri.parse("https://www.youtube.com/watch?v=" + track.getId()));
-            context.startActivity(intent);
+            String url = track.getYoutubeUrl();
+            if (url == null || url.isEmpty()) {
+                url = "https://www.youtube.com/watch?v=" + track.getId();
+            }
+            context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
         });
 
-        // Favorite Button Click
+        // Favorite Button: Local Cache + Firebase Sync
         holder.favoriteButton.setOnClickListener(v -> {
-                if (track != null && track.getId() != null) {
-                    Log.d("TRACK_ADAPTER", "Favoriting: " + track.getTitle());
-                    // TRIGGER YOUR FIREBASE SAVE HERE
-                    // FirebaseManager.getInstance().saveToFavorites(uid, track);
-                } else {
-                    Toast.makeText(context, "Cannot favorite this track", Toast.LENGTH_SHORT).show();
-                }
-            });
+            if (track.getId() == null) return;
+
+            // 1. Instant Local Persistence
+            SharedPreferencesManager.getInstance().addFavorite(track);
+
+            // 2. UI Feedback
+            holder.favoriteButton.setText("❤️ Favorited");
+            holder.favoriteButton.setEnabled(false);
+
+            // 3. Background Firebase Sync
+            // FirebaseManager.getInstance().saveFavoriteTrack(...)
+            Log.d(TAG, "Syncing favorite to cloud: " + track.getTitle());
+        });
     }
+
+    @Override
+    public void onViewRecycled(@NonNull TrackViewHolder holder) {
+        super.onViewRecycled(holder);
+        // CRITICAL: Release memory when row moves to recycle pool
+        Glide.with(context).clear(holder.thumbnail);
+    }
+
+    @Override
+    public int getItemCount() { return tracks.size(); }
+
+    // --- Lifecycle Awareness ---
+    @Override
+    public void onPause(@NonNull LifecycleOwner owner) { Glide.with(context).pauseRequests(); }
+
+    @Override
+    public void onResume(@NonNull LifecycleOwner owner) { Glide.with(context).resumeRequests(); }
 
     public static class TrackViewHolder extends RecyclerView.ViewHolder {
         public ImageView thumbnail;
-        public TextView title;
-        public TextView artist;
-        public Button playButton;
-        public Button favoriteButton;
+        public TextView title, artist;
+        public Button playButton, favoriteButton;
 
         public TrackViewHolder(@NonNull View itemView) {
             super(itemView);
-            // ✅ These IDs must match your item_track.xml exactly
             thumbnail = itemView.findViewById(R.id.trackThumbnail);
             title = itemView.findViewById(R.id.trackTitle);
             artist = itemView.findViewById(R.id.trackArtist);

@@ -3,6 +3,7 @@ import com.example.moodic.AuthCompleteListener;
 import com.example.moodic.activities.LoginActivity;
 import com.example.moodic.R;
 import com.example.moodic.data.FirebaseManager;
+import com.example.moodic.data.ValidationUtils;
 
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
@@ -42,22 +43,35 @@ public class SignUpActivity extends AppCompatActivity {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
-        if(email.isEmpty() || password.isEmpty()){
-            Toast.makeText(this, "Fill in email and password", Toast.LENGTH_SHORT).show();
+        if (!ValidationUtils.isValidEmail(email)) {
+            etEmail.setError("Invalid email format");
             return;
         }
-        firebaseManager.registerUser(email, password, /* userName */ "New User", new AuthCompleteListener() {
+        if (!ValidationUtils.isValidPassword(password)) {
+            etPassword.setError("Password must be 6+ characters");
+            return;
+        }
+
+        // Show a ProgressBar here (RC apps don't leave users guessing if it's loading)
+        btnSignUp.setEnabled(false);
+
+        firebaseManager.registerUser(email, password, "New User", new AuthCompleteListener() {
             @Override
             public void onSuccess(String uid) {
-                Toast.makeText(SignUpActivity.this, "Account created!", Toast.LENGTH_SHORT).show();
-                // אם ההרשמה והכתיבה ל-Firestore הצליחו, עוברים מסך
+                btnSignUp.setEnabled(true);
                 startActivity(new Intent(SignUpActivity.this, MainActivity.class));
                 finish();
             }
 
             @Override
             public void onFailure(String error) {
-                Toast.makeText(SignUpActivity.this, "Registration failed: " + error, Toast.LENGTH_LONG).show();
+                btnSignUp.setEnabled(true);
+                // Better error handling:
+                if (error.contains("already in use")) {
+                    Toast.makeText(SignUpActivity.this, "Email already registered. Try logging in.", Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(SignUpActivity.this, error, Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }

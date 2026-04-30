@@ -2,13 +2,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Network -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <!-- Speech Recognition -->
-    <uses-permission android:name="android.permission.RECORD_AUDIO" /> <!-- Notifications & Alarms -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Speech Recognition -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Notifications & Alarms -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission
+        android:name="android.permission.USE_EXACT_ALARM"
+        tools:ignore="PermissionOnlyForInstantApps" />
 
     <application
         android:allowBackup="true"
@@ -20,6 +28,54 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Moodic"
         tools:targetApi="31">
+
+        <!-- ── Activities ──────────────────────────────────────────────── -->
+
+        <activity
+            android:name=".activities.LoginActivity"
+            android:exported="true"
+            android:importantForAutofill="no"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".activities.MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop" />
+
+        <activity
+            android:name=".activities.SignUpActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.MoodInputActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.YouTubeSearchActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.ResultsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.SettingsActivity"
+            android:exported="false" />
+
+        <!-- Task 1: Embedded YouTube player -->
+        <activity
+            android:name=".activities.YouTubePlayerActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+
+        <!-- ── Receivers ───────────────────────────────────────────────── -->
+
+        <!-- Headset unplug / call interruption -->
         <receiver
             android:name=".CallReceiver"
             android:enabled="true"
@@ -29,37 +85,7 @@
             </intent-filter>
         </receiver>
 
-        <activity
-            android:name=".activities.MainActivity"
-            android:exported="true"
-            android:launchMode="singleTop" />
-        <activity
-            android:name=".activities.LoginActivity"
-            android:exported="true"
-            android:importantForAutofill="no"
-            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".activities.SignUpActivity"
-            android:exported="false" /> <!-- Mood Input Activity -->
-        <activity
-            android:name=".activities.MoodInputActivity"
-            android:exported="false" /> <!-- YouTube Search Activity -->
-        <activity
-            android:name=".activities.YouTubeSearchActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activities.SettingsActivity"
-            android:exported="false" /> <!-- Results Activity -->
-        <activity
-            android:name=".activities.ResultsActivity"
-            android:exported="false" />
-
+        <!-- Task 3: Daily mood reminder alarm -->
         <receiver
             android:name=".notifications.ReminderBroadcastReceiver"
             android:exported="false">
@@ -67,6 +93,7 @@
                 <action android:name="com.example.moodic.MOOD_REMINDER" />
             </intent-filter>
         </receiver>
+
     </application>
 
 </manifest>

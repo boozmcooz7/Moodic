@@ -73,7 +73,5 @@ dependencies {
     implementation 'com.github.bumptech.glide:glide:4.16.0'
 
     // 7. YOUTUBE API (With careful exclusion to prevent library clashing)
-    implementation(libs.google.api.services.youtube.vv3rev2221250) {
-        exclude group: "com.google.guava", module: "guava-jdk5"
-    }
+    implementation 'com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0'
 }

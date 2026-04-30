@@ -18,8 +18,6 @@ public class ReminderBroadcastReceiver extends BroadcastReceiver {
             NotificationManager notificationManager = new NotificationManager(context);
             notificationManager.showMoodReminderNotification();
 
-            // Auto-reschedule for next day
-            notificationManager.scheduleDailyReminder(9, 0);
         }
     }
 }

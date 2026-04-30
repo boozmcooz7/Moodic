@@ -1,6 +1,8 @@
 package com.example.moodic.activities;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -49,6 +51,14 @@ public class MainActivity extends AppCompatActivity {
         setupButtonListeners();
 
         Log.d(TAG, "MainActivity initialized in " + (System.currentTimeMillis() - startTime) + "ms");
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(
+                        new String[]{ android.Manifest.permission.POST_NOTIFICATIONS }, 200);
+            }
+        }
         }
 
     private void initializeUI() {

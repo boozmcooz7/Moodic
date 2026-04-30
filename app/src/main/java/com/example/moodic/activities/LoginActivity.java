@@ -45,7 +45,7 @@ public class LoginActivity extends AppCompatActivity {
     private Uri imageUri;
     public AuthViewModel authViewModel;
     private SharedPreferencesManager prefs;
-
+// Correct way to initialize in Activity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,7 +57,8 @@ public class LoginActivity extends AppCompatActivity {
         storage = FirebaseStorage.getInstance();
 
         // Init SharedPreferences
-        prefs = SharedPreferencesManager.getInstance(this);
+        SharedPreferencesManager.init(this);
+        prefs = SharedPreferencesManager.getInstance();
 
         // Init UI
         etEmail        = findViewById(R.id.etEmail);

@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.moodic.R;
 import com.example.moodic.notifications.NotificationManager;
 
+
 /**
  * ✅ FIXED SettingsActivity
  * - Better error handling

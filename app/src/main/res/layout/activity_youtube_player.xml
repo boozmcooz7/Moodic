@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    activity_youtube_player.xml
+    Task 1 – Requirement #8: Embedded YouTube Player Layout
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#000000">
+
+    <!-- Optional video title bar -->
+    <TextView
+        android:id="@+id/playerTitleText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:background="#1A1A1A" />
+
+    <!-- Loading spinner shown while player initialises -->
+    <ProgressBar
+        android:id="@+id/playerLoadingBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="48dp"
+        android:visibility="visible" />
+
+    <!--
+        YouTubePlayerView – lifecycle-aware, auto-sizes to 16:9 by default.
+        The library handles fullscreen, seek bar, play/pause controls internally.
+    -->
+    <com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
+        android:id="@+id/youTubePlayerView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>

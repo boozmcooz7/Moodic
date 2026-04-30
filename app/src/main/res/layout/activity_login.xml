@@ -81,8 +81,8 @@
         android:backgroundTint="#6200EE"
         android:elevation="4dp"
         android:text="Login"
-        android:textSize="16sp"
-        android:textStyle="bold" />
+        android:textColor="@color/white"
+        android:textSize="16sp" />
 
     <!-- Divider with "OR" -->
     <LinearLayout
@@ -120,19 +120,23 @@
         android:layout_weight="1" />
 
     <!-- Create Account Button - At Bottom -->
-    <Button
-        android:id="@+id/btnRegister"
-        style="@style/Widget.Material3.Button.OutlinedButton"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:backgroundTint="#FFFFFF"
-        android:text="Create Account"
-        android:textColor="#6200EE"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp" />
 
     <!-- Progress Bar -->
+    <Button
+        android:id="@+id/btnRegister"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginBottom="16dp"
+        android:backgroundTint="#6200EE"
+        android:elevation="4dp"
+        android:text="Create Account"
+        android:textColor="@color/white"
+        android:textSize="16sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="120dp" />
+
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"

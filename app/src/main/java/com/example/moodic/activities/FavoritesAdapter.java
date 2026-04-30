@@ -18,6 +18,7 @@ import com.example.moodic.models.Track;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.example.moodic.activities.YouTubePlayerActivity;
 
 public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.FavoriteViewHolder> {
 
@@ -75,7 +76,7 @@ public class FavoritesAdapter extends RecyclerView.Adapter<FavoritesAdapter.Favo
 
         // Play — open MusicPlayerActivity with the YouTube URL
         holder.playButton.setOnClickListener(v -> {
-            Intent intent = new Intent(context, MusicPlayerActivity.class);
+          Intent intent = new Intent(context, YouTubePlayerActivity.class);
             intent.putExtra("videoUrl", track.getYoutubeUrl());
             intent.putExtra("mood", ""); // no mood context needed here
             context.startActivity(intent);
