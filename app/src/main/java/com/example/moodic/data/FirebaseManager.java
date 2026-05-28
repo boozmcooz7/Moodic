@@ -14,7 +14,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
-import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.SetOptions;
 
@@ -23,6 +22,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Manages all interactions with Firebase services including Auth, Firestore, and basic network checks.
+ */
 public class FirebaseManager {
     private static final String TAG = "FirebaseManager";
     private static FirebaseManager instance;
@@ -31,7 +33,8 @@ public class FirebaseManager {
     private final FirebaseAuth mAuth;
     private final FirebaseFirestore db;
 
-    // Interfaces from Version 2
+    // ── Interfaces ──────────────────────────────────────────────────────────
+
     public interface FavoritesLoadListener {
         void onFavoritesLoaded(List<Track> tracks);
         void onFavoritesLoadFailed(String error);
@@ -54,26 +57,24 @@ public class FirebaseManager {
         try {
             db.setFirestoreSettings(settings);
         } catch (Exception e) {
-            Log.w(TAG, "Firestore settings already applied.");
+            Log.w(TAG, "Firestore settings already applied or could not be set.");
         }
     }
 
-    public static void init(Context context) {
+    public static synchronized void init(Context context) {
         if (instance == null) {
             instance = new FirebaseManager(context);
         }
     }
 
-    public static FirebaseManager getInstance() {
+    public static synchronized FirebaseManager getInstance() {
         if (instance == null) {
-            throw new IllegalStateException("Call FirebaseManager.init(context) in Application class first.");
+            throw new IllegalStateException("Call FirebaseManager.init(context) first.");
         }
         return instance;
     }
 
-    // -----------------------------------------------------------------------
-    // Network Helper
-    // -----------------------------------------------------------------------
+    // ── Network Helper ──────────────────────────────────────────────────────
 
     public boolean isNetworkAvailable() {
         try {
@@ -93,9 +94,7 @@ public class FirebaseManager {
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Authentication
-    // -----------------------------------------------------------------------
+    // ── Authentication ──────────────────────────────────────────────────────
 
     public void registerUser(String email, String password, String userName, AuthCompleteListener listener) {
         if (!isNetworkAvailable()) {
@@ -127,29 +126,34 @@ public class FirebaseManager {
                 });
     }
 
-    // -----------------------------------------------------------------------
-    // User Profile
-    // -----------------------------------------------------------------------
+    // ── User Profile ────────────────────────────────────────────────────────
+
     /**
      * Updates only the dynamic profile array for a user.
      */
-    public void updateDynamicProfile(String uid, double[] currentProfile) {
-        if (uid == null || currentProfile == null) return;
+    public void updateDynamicProfile(String uid, double[] currentProfile, ActionListener listener) {
+        if (uid == null || currentProfile == null) {
+            if (listener != null) listener.onFailure("Invalid data");
+            return;
+        }
 
-        // Firestore does not store raw double arrays well, so convert to List
         List<Double> profileList = new ArrayList<>();
         for (double val : currentProfile) {
             profileList.add(val);
         }
 
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("dynamicProfile", profileList);
-
         db.collection("Users").document(uid)
-                .update(updates)
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "Dynamic profile updated successfully"))
-                .addOnFailureListener(e -> Log.e(TAG, "Failed to update dynamic profile: " + e.getMessage()));
+                .update("dynamicListeningProfile", profileList)
+                .addOnSuccessListener(aVoid -> {
+                    if (listener != null) listener.onSuccess();
+                    Log.d(TAG, "Dynamic profile updated successfully");
+                })
+                .addOnFailureListener(e -> {
+                    if (listener != null) listener.onFailure(buildNetworkError(e));
+                    Log.e(TAG, "Failed to update dynamic profile", e);
+                });
     }
+
     public void loadUserProfile(String uid, ProfileLoadListener listener) {
         db.collection("Users").document(uid).get()
                 .addOnSuccessListener(snapshot -> {
@@ -159,26 +163,51 @@ public class FirebaseManager {
                         listener.onProfileLoadFailed("Profile not found.");
                     }
                 })
-                .addOnFailureListener(e -> listener.onProfileLoadFailed(buildNetworkError(e)));
+                .addOnFailureListener(e -> {
+                    if (listener != null) listener.onProfileLoadFailed(buildNetworkError(e));
+                });
     }
 
+    /**
+     * Saves or updates the full user profile.
+     */
     public void saveUserProfile(String uid, String userName, List<String> favoriteGenres,
-                                List<Track> favoriteTracks, double[] dynamicProfile) {
+                                List<Track> favoriteTracks, double[] dynamicProfile,
+                                ActionListener listener) {
         try {
-            User user = new User();
-            db.collection("Users").document(uid).set(user, SetOptions.merge())
-                    .addOnSuccessListener(v -> Log.d(TAG, "Profile saved"))
-                    .addOnFailureListener(e -> Log.e(TAG, "Save failed: " + buildNetworkError(e)));
+            Map<String, Object> userMap = new HashMap<>();
+            userMap.put("uid", uid);
+            userMap.put("userName", userName);
+            userMap.put("favoriteGenres", favoriteGenres);
+            userMap.put("favoriteTracks", favoriteTracks);
+            userMap.put("lastUpdated", FieldValue.serverTimestamp());
+
+            if (dynamicProfile != null) {
+                List<Double> profileList = new ArrayList<>();
+                for (double d : dynamicProfile) profileList.add(d);
+                userMap.put("dynamicListeningProfile", profileList);
+            }
+
+            db.collection("Users").document(uid)
+                    .set(userMap, SetOptions.merge())
+                    .addOnSuccessListener(v -> {
+                        Log.d(TAG, "Profile saved");
+                        if (listener != null) listener.onSuccess();
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Save failed: " + e.getMessage());
+                        if (listener != null) listener.onFailure(buildNetworkError(e));
+                    });
         } catch (Exception e) {
             Log.e(TAG, "saveUserProfile error", e);
+            if (listener != null) listener.onFailure("Internal error occurred.");
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Favorites (Sub-collection Logic)
-    // -----------------------------------------------------------------------
+    // ── Favorites (Sub-collection Logic) ────────────────────────────────────
 
     public void saveFavoriteTrack(String uid, Track track, ActionListener listener) {
+        if (track == null || track.getId() == null) return;
         db.collection("Users").document(uid).collection("favorites").document(track.getId())
                 .set(track, SetOptions.merge())
                 .addOnSuccessListener(v -> { if(listener != null) listener.onSuccess(); })
@@ -186,6 +215,7 @@ public class FirebaseManager {
     }
 
     public void removeFavoriteTrack(String uid, String trackId, ActionListener listener) {
+        if (trackId == null) return;
         db.collection("Users").document(uid).collection("favorites").document(trackId)
                 .delete()
                 .addOnSuccessListener(v -> { if(listener != null) listener.onSuccess(); })
@@ -200,16 +230,17 @@ public class FirebaseManager {
                     for (QueryDocumentSnapshot doc : querySnapshot) {
                         tracks.add(doc.toObject(Track.class));
                     }
-                    listener.onFavoritesLoaded(tracks);
+                    if (listener != null) listener.onFavoritesLoaded(tracks);
                 })
-                .addOnFailureListener(e -> listener.onFavoritesLoadFailed(buildNetworkError(e)));
+                .addOnFailureListener(e -> {
+                    if (listener != null) listener.onFavoritesLoadFailed(buildNetworkError(e));
+                });
     }
 
-    // -----------------------------------------------------------------------
-    // Mood History
-    // -----------------------------------------------------------------------
+    // ── Mood History ────────────────────────────────────────────────────────
 
     public void saveMoodEntry(String uid, Map<String, Object> moodData) {
+        if (moodData == null) return;
         moodData.put("timestamp", FieldValue.serverTimestamp());
         db.collection("Users").document(uid).collection("moodHistory")
                 .add(moodData)
@@ -217,14 +248,11 @@ public class FirebaseManager {
                 .addOnFailureListener(e -> Log.e(TAG, "Mood log failed: " + buildNetworkError(e)));
     }
 
-    // -----------------------------------------------------------------------
-    // Helpers
-    // -----------------------------------------------------------------------
+    // ── Helpers ─────────────────────────────────────────────────────────────
 
     private String buildNetworkError(Exception e) {
         if (e == null) return "Unknown error";
-        String msg = e.getMessage() != null ? e.getMessage() : "Connection error";
         if (!isNetworkAvailable()) return "Offline: Changes will sync later.";
-        return msg;
+        return e.getMessage() != null ? e.getMessage() : "Connection error";
     }
 }

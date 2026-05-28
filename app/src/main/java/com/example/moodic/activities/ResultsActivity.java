@@ -1,6 +1,5 @@
 package com.example.moodic.activities;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -13,11 +12,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.moodic.BuildConfig;
 import com.example.moodic.R;
 import com.example.moodic.engines.AIEngine;
+import com.example.moodic.engines.MoodAIHelper;
 import com.example.moodic.data.YouTubeDataSource;
 import com.example.moodic.models.Track;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ResultsActivity extends AppCompatActivity {
@@ -38,142 +40,116 @@ public class ResultsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_results);
 
-        // 1. Get intent data
         userMood = getIntent().getStringExtra("mood");
         userGenre = getIntent().getStringExtra("genre");
 
-        // Receive the tracks from MoodInputActivity
-        List<Track> incomingTracks = (List<Track>) getIntent().getSerializableExtra("tracks");
-
-        // 2. Initialize UI elements
         moodDisplay = findViewById(R.id.moodDisplay);
         vectorDisplay = findViewById(R.id.vectorDisplay);
         tracksRecyclerView = findViewById(R.id.tracksRecyclerView);
         loadingBar = findViewById(R.id.loadingBar);
         retryButton = findViewById(R.id.retryButton);
 
-        // 3. Set up RecyclerView
         tracksRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new TrackAdapter(this);
         tracksRecyclerView.setAdapter(adapter);
 
-        // 4. Display mood info
-        moodDisplay.setText("Mood: " + userMood + " | Genre: " + userGenre);
-
-        // 5. Setup Navigation
-        setupNavigationButtons();
-
-        // 6. DECISION POINT: Show passed tracks or load new ones
-        if (incomingTracks != null && !incomingTracks.isEmpty()) {
-            showLoading(false);
-            adapter.setTracks(incomingTracks);
-            vectorDisplay.setText("Mood Vector: Applied from Analysis");
-        } else {
-            loadMusicRecommendations();
+        if (moodDisplay != null) {
+            moodDisplay.setText("Mood: " + userMood + " | Genre: " + userGenre);
         }
-    } // <--- This brace closes onCreate. Now we can start other methods!
 
-    private void setupNavigationButtons() {
-        Button homeButton = findViewById(R.id.homeButton);
-
-        // 1. Retry / New Mood Button - simply closes this screen
-        retryButton.setVisibility(View.VISIBLE);
-        retryButton.setOnClickListener(v -> {
-            finish();
-        });
-
-        // 2. Home Button - goes to MainActivity
-        if (homeButton != null) {
-            homeButton.setOnClickListener(v -> {
-                Intent intent = new Intent(ResultsActivity.this, MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                startActivity(intent);
-                finish();
-            });
+        if (retryButton != null) {
+            retryButton.setVisibility(View.VISIBLE);
+            retryButton.setOnClickListener(v -> finish());
         }
+
+        loadMusicRecommendation();
     }
 
-    private void loadMusicRecommendations() {
-        showLoading(true);
+    private void loadMusicRecommendation() {
+        if (loadingBar != null) loadingBar.setVisibility(View.VISIBLE);
+
+        // ניסיון חילוץ ווקטור רגשי חזותי
         AIEngine.getInstance().analyzeMood(userMood, new AIEngine.MusicVectorCallback() {
             @Override
             public void onSuccess(AIEngine.MusicVector vector) {
-                Log.d(TAG, "✅ AI Success: " + vector.energy);
-                executeYouTubeSearch(userMood + " " + userGenre, vector);            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                Log.e(TAG, "❌ AI Failed: " + t.getMessage());
-                // 🔥 BYPASS: If AI fails, don't show an error Toast. Just fetch music!
-                executeYouTubeSearch(userMood + " " + userGenre, null);
-            }
-        });
-    }
-    private void executeYouTubeSearch(String query, AIEngine.MusicVector vector) {
-        new Thread(() -> {
-            try {
-                // Clean up the query
-                String searchQuery = query + " music song";
-                List<Track> tracks = YouTubeDataSource.getInstance().searchTracks(searchQuery, 10);
-
                 runOnUiThread(() -> {
-                    showLoading(false);
-                    displayResults(vector, tracks);
-                    if (vector == null) {
-                        Toast.makeText(this, "Showing standard results", Toast.LENGTH_SHORT).show();
+                    if (vectorDisplay != null) {
+                        String vectorText = String.format("AI Emotional Vector:\n⚡ Energy: %.2f | 🥁 Tempo: %.2f | 😊 Valence: %.2f",
+                                vector.energy, vector.tempo, vector.valence);
+                        vectorDisplay.setText(vectorText);
                     }
                 });
-            } catch (Exception e) {
-                handleError("Search failed: " + e.getMessage());
             }
-        }).start();
-    }
+            @Override
+            public void onFailure(Throwable t) {
+                Log.e(TAG, "AI Vector calculation skipped");
+            }
+        });
 
-    private void fetchTracks(AIEngine.MusicVector vector, String queryText) {
+        // שליפת שיר בודד וממוקד ברקע
         new Thread(() -> {
+            List<Track> trackContainer = new ArrayList<>();
+            YouTubeDataSource youtube = YouTubeDataSource.getInstance();
+            boolean networkError = false;
+
             try {
-                // Append "music" to make the query professional
-                List<Track> tracks = YouTubeDataSource.getInstance().searchTracks(queryText + " music", 10);
-                runOnUiThread(() -> {
-                    showLoading(false);
-                    displayResults(vector, tracks);
-                });
+                // שלב 1: פנייה ל-Gemini לקבלת רשימת המלצות
+                MoodAIHelper aiHelper = new MoodAIHelper(BuildConfig.Test_Key, null);
+                List<String> suggestedSongs = aiHelper.doInBackground(userMood);
+
+                // שלב 2: במקום לרוץ בלולאה על 10 שירים, לוקחים רק את השיר הראשון (המוביל) ומחפשים אותו ביוטיוב!
+                if (suggestedSongs != null && !suggestedSongs.isEmpty()) {
+                    String topSongQuery = suggestedSongs.get(0);
+                    List<Track> results = youtube.searchTracks(topSongQuery + " " + userGenre, 1);
+                    if (results != null && !results.isEmpty()) {
+                        trackContainer.add(results.get(0));
+                    }
+                }
             } catch (Exception e) {
-                handleError("Network error: " + e.getMessage());
+                Log.e(TAG, "AI/YouTube route failed, using offline fallback", e);
+                networkError = true;
             }
-        }).start();
-    }
 
+            // שלב 3: רשת ביטחון מיידית - אם החיפוש נכשל או חסום, שמים שיר בנאלי אחד מוכן מראש
+            if (trackContainer.isEmpty()) {
+                networkError = true;
+                trackContainer.add(getSingleFallbackTrack(userGenre));
+            }
 
-        private void displayResults(AIEngine.MusicVector vector, List<Track> tracks) {
+            List<Track> finalResult = trackContainer;
+            boolean showWarning = networkError;
+
+            // עדכון הממשק
             runOnUiThread(() -> {
-                if (tracks == null || tracks.isEmpty()) {
-                    // This is what you see now because of the 403 error
-                    Log.e("MOODIC", "No tracks to display");
-                } else {
-                    // Once you click ENABLE in the console, this will run!
-                    adapter.setTracks(tracks);
+                if (loadingBar != null) loadingBar.setVisibility(View.GONE);
+
+                if (showWarning && vectorDisplay != null) {
+                    vectorDisplay.setText("⚠️ NOTICE: Google API Limit / Offline Mode.\nLoaded focused local backup song.");
+                    vectorDisplay.setTextColor(android.graphics.Color.RED);
+                } else if (vectorDisplay != null && vectorDisplay.getText().toString().equals("AI Analysis Loading...")) {
+                    vectorDisplay.setText("AI Vector Profile Applied Successfully.");
+                    vectorDisplay.setTextColor(android.graphics.Color.GREEN);
+                }
+
+                if (adapter != null && !finalResult.isEmpty()) {
+                    adapter.setTracks(finalResult);
                     adapter.notifyDataSetChanged();
-                    Log.d("MOODIC", "UI Updated with " + tracks.size() + " songs");
                 }
             });
+
+        }).start();
+    }
+
+    // שיר יציב אחד קבוע לכל מצב למניעת מסכים ריקים
+    private Track getSingleFallbackTrack(String genre) {
+        Track fallbackTrack;
+        if (genre.equalsIgnoreCase("Pop") || genre.equalsIgnoreCase("Happy")) {
+            fallbackTrack = new Track("Ki1uO3N", "Cruel Summer", "Taylor Swift", "Pop");
+        } else {
+            fallbackTrack = new Track("ZmE3O_a", "Driver's License", "Olivia Rodrigo", "Sad Pop");
         }
-    private void handleError(String message) {
-        Log.e(TAG, message);
-        runOnUiThread(() -> {
-            showLoading(false);
-            showError(message);
-        });
-    }
-
-    private void showError(String errorMessage) {
-        Toast.makeText(this, "Error: " + errorMessage, Toast.LENGTH_LONG).show();
-        retryButton.setVisibility(View.VISIBLE);
-        retryButton.setOnClickListener(v -> loadMusicRecommendations());
-    }
-
-    private void showLoading(boolean isLoading) {
-        loadingBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-        tracksRecyclerView.setVisibility(isLoading ? View.GONE : View.VISIBLE);
+        fallbackTrack.setYoutubeUrl("https://www.youtube.com/watch?v=" + fallbackTrack.getId());
+        fallbackTrack.setThumbnailUrl("https://img.youtube.com/vi/" + fallbackTrack.getId() + "/0.jpg");
+        return fallbackTrack;
     }
 }

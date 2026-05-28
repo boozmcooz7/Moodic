@@ -23,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView welcomeText;
     private TextView lastMoodText;
-    private Button moodButton, youtubeButton, favoritesButton, logoutButton;
+    private Button moodButton, youtubeButton, favoritesButton, logoutButton,settingsButton;
 
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
         moodButton = findViewById(R.id.moodButton);
         youtubeButton = findViewById(R.id.youtubeButton);
         favoritesButton = findViewById(R.id.favoritesButton);
+        settingsButton = findViewById(R.id.settingsButton);
         logoutButton = findViewById(R.id.logoutButton);
     }
 
@@ -115,10 +116,13 @@ public class MainActivity extends AppCompatActivity {
         youtubeButton.setOnClickListener(v ->
                 startActivity(new Intent(this, YouTubeSearchActivity.class)));
 
-        // Assuming FavoritesActivity is part of your project (not in manifest, but in code)
-        // If FavoritesActivity doesn't exist yet, this will cause a compile error.
+
         favoritesButton.setOnClickListener(v ->
                 startActivity(new Intent(this, FavoritesActivity.class)));
+
+            settingsButton.setOnClickListener(v ->
+                    startActivity(new Intent(this, SettingsActivity.class))
+            );
 
         logoutButton.setOnClickListener(v -> {
             prefs.clearSession();

@@ -1,49 +1,45 @@
 package com.example.moodic.activities;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.example.moodic.BuildConfig;
 import com.example.moodic.engines.InputProcessor;
 import com.example.moodic.R;
-import com.example.moodic.engines.MoodAIHelper;
-import com.example.moodic.data.YouTubeDataSource;
-import com.example.moodic.models.Track;
+import com.example.moodic.engines.SpeechToTextEngine;
 import com.google.firebase.auth.FirebaseAuth;
 
-import java.util.List;
-
-/**
- * Updated MoodInputActivity
- *
- * Task 2 integration:
- *   1. User types free-text mood (e.g. "I'm feeling lonely in the rain")
- *   2. MoodAIHelper calls Gemini → returns 3-5 musical keywords
- *   3. Keywords are joined and used as the YouTube search query
- *   4. Results passed to ResultsActivity as usual
- */
 public class MoodInputActivity extends AppCompatActivity {
 
     private static final String TAG = "MoodInputActivity";
+    private static final int MIC_PERMISSION_CODE = 300;
 
-    // UI
+    // UI Elements
     private EditText    moodInput;
     private Spinner     genreSpinner;
-    private EditText    trackInput;
     private Button      analyzeButton;
+    private Button      btnHappy, btnSad, btnCalm, btnAngry, btnEnergetic;
+    private ImageButton voiceInputButton;
     private ProgressBar progressBar;
 
-    // Firebase
+    // Frameworks
     private FirebaseAuth mAuth;
+    private SpeechToTextEngine speechEngine;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,21 +48,72 @@ public class MoodInputActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        moodInput     = findViewById(R.id.moodInput);
-        genreSpinner  = findViewById(R.id.genreSpinner);
-        trackInput    = findViewById(R.id.trackInput);
-        analyzeButton = findViewById(R.id.analyzeButton);
-        progressBar   = findViewById(R.id.loadingBar);
+        // קישור משתנים לאלמנטים הגרפיים מה-XML החדש
+        moodInput        = findViewById(R.id.moodInput);
+        genreSpinner     = findViewById(R.id.genreSpinner);
+        analyzeButton    = findViewById(R.id.analyzeButton);
+        progressBar      = findViewById(R.id.loadingBar);
+        btnHappy         = findViewById(R.id.btnHappy);
+        btnSad           = findViewById(R.id.btnSad);
+        btnCalm          = findViewById(R.id.btnCalm);
+        btnAngry         = findViewById(R.id.btnAngry);
+        btnEnergetic     = findViewById(R.id.btnEnergetic);
+        voiceInputButton = findViewById(R.id.voiceInputButton);
 
-        analyzeButton.setOnClickListener(v -> startMoodAnalysis());
+        // הגדרת האזנה לכפתורי הרגש המהירים
+        if (btnHappy != null) btnHappy.setOnClickListener(v -> moodInput.setText("I am feeling incredibly happy, energetic and full of life"));
+        if (btnSad != null) btnSad.setOnClickListener(v -> moodInput.setText("I am feeling lonely, down and wish I had more friends around me"));
+        if (btnCalm != null) btnCalm.setOnClickListener(v -> moodInput.setText("I am looking for peaceful, tranquil music to help me relax and unwind after a quiet day"));
+        if (btnAngry != null) btnAngry.setOnClickListener(v -> moodInput.setText("I feel completely overwhelmed with frustration and anger, looking for intense and heavy sounds"));
+        if (btnEnergetic != null) btnEnergetic.setOnClickListener(v -> moodInput.setText("I am feeling incredibly hyped up, motivated, ecstatic and ready to take on the world"));
+
+        // אתחול מנוע הדיבור לטקסט וכפיית הדפסה על ה-UI Thread בזמן אמת
+        speechEngine = new SpeechToTextEngine(this);
+        speechEngine.setOnResultListener(text -> {
+            runOnUiThread(() -> {
+                if (moodInput != null && text != null && !text.isEmpty()) {
+                    moodInput.setText(text);
+                    Log.d(TAG, "Speech matched and typed: " + text);
+                }
+            });
+        });
+
+        // לחיצה על אייקון המיקרופון הצמוד
+        if (voiceInputButton != null) {
+            voiceInputButton.setOnClickListener(v -> {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                    startListeningVoice();
+                } else {
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, MIC_PERMISSION_CODE);
+                }
+            });
+        }
+
+        if (analyzeButton != null) {
+            analyzeButton.setOnClickListener(v -> startMoodAnalysis());
+        }
     }
 
-    // ── Task 2: Mood → AI Keywords → YouTube ─────────────────────────────────
+    private void startListeningVoice() {
+        Toast.makeText(this, "Listening... Speak now", Toast.LENGTH_SHORT).show();
+        if (speechEngine != null) {
+            speechEngine.startListening("en-US");
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == MIC_PERMISSION_CODE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            startListeningVoice();
+        } else {
+            Toast.makeText(this, "Microphone permission required", Toast.LENGTH_SHORT).show();
+        }
+    }
 
     private void startMoodAnalysis() {
-        String rawMood  = moodInput.getText().toString().trim();
-        String genre    = genreSpinner.getSelectedItem().toString();
-        String trackName = trackInput.getText().toString().trim();
+        String rawMood = moodInput.getText().toString().trim();
+        String genre   = genreSpinner.getSelectedItem().toString();
 
         if (rawMood.isEmpty()) {
             Toast.makeText(this, "Please describe how you're feeling", Toast.LENGTH_SHORT).show();
@@ -75,93 +122,39 @@ public class MoodInputActivity extends AppCompatActivity {
 
         setLoading(true);
 
-        // Step 1: Send free-text mood to Gemini via MoodAIHelper (AsyncTask)
-        new MoodAIHelper(BuildConfig.Test_Key, new MoodAIHelper.Callback() {
-
-            @Override
-            public void onKeywordsReady(List<String> keywords) {
-                // keywords e.g. ["melancholic", "indie folk", "acoustic", "rainy"]
-                Log.d(TAG, "AI keywords: " + keywords);
-
-                // Step 2: Build a rich YouTube search query from the keywords + genre
-                String keywordQuery = String.join(" ", keywords) + " " + genre;
-
-                // Step 3: Save mood entry and search YouTube (background thread)
-                String uid = mAuth.getCurrentUser() != null
-                        ? mAuth.getCurrentUser().getUid() : "";
-
-                searchYouTubeAndNavigate(rawMood, genre, trackName, keywordQuery, uid);
-            }
-
-            @Override
-            public void onError(String errorMessage) {
-                Log.e(TAG, "AI keyword extraction failed: " + errorMessage);
-                Toast.makeText(MoodInputActivity.this,
-                        "AI unavailable, using mood directly: " + rawMood,
-                        Toast.LENGTH_SHORT).show();
-
-                // Graceful fallback: search with the raw mood text
-                String uid = mAuth.getCurrentUser() != null
-                        ? mAuth.getCurrentUser().getUid() : "";
-                searchYouTubeAndNavigate(rawMood, genre, trackName, rawMood + " " + genre, uid);
-            }
-
-        }).execute(rawMood);  // AsyncTask.execute() kicks off doInBackground
-    }
-
-    // ── Background: Firebase save + YouTube search ────────────────────────────
-
-    private void searchYouTubeAndNavigate(String mood, String genre, String trackName,
-                                          String youtubeQuery, String uid) {
         new Thread(() -> {
             try {
-                // Persist mood entry
+                // שמירה מאובטחת של מצב הרוח וההיסטוריה לענן של פיירבייס
+                String uid = mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getUid() : "";
                 if (!uid.isEmpty()) {
-                    InputProcessor.processMoodInput(
-                            uid, mood, genre, trackName, System.currentTimeMillis());
-                    Log.d(TAG, "✅ Mood saved to Firebase");
+                    InputProcessor.processMoodInput(uid, rawMood, genre, "", System.currentTimeMillis());
                 }
 
-                // YouTube search using the AI-enhanced query
-                YouTubeDataSource youtube = YouTubeDataSource.getInstance();
-                List<Track> tracks = youtube.searchTracks(youtubeQuery, 10);
-                Log.d(TAG, "✅ Found " + tracks.size() + " tracks for query: " + youtubeQuery);
-
+                // מעבר מיידי ומאובטח למסך התוצאות ללא קריסות ומסכים לבנים
                 runOnUiThread(() -> {
                     setLoading(false);
-
-                    if (tracks.isEmpty()) {
-                        Toast.makeText(this,
-                                "No tracks found – try a different mood description",
-                                Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(this,
-                                "Found " + tracks.size() + " tracks!", Toast.LENGTH_SHORT).show();
-
-                        Intent intent = new Intent(MoodInputActivity.this, ResultsActivity.class);
-                        intent.putExtra("mood",  mood);
-                        intent.putExtra("genre", genre);
-                        startActivity(intent);
-
-                        moodInput.setText("");
-                        trackInput.setText("");
-                    }
+                    Intent intent = new Intent(MoodInputActivity.this, ResultsActivity.class);
+                    intent.putExtra("mood", rawMood);
+                    intent.putExtra("genre", genre);
+                    startActivity(intent);
+                    moodInput.setText("");
                 });
 
             } catch (Exception e) {
-                Log.e(TAG, "Error in searchYouTubeAndNavigate", e);
-                runOnUiThread(() -> {
-                    setLoading(false);
-                    Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+                Log.e(TAG, "Analysis failed to trigger", e);
+                runOnUiThread(() -> setLoading(false));
             }
         }).start();
     }
 
-    // ── Helper ────────────────────────────────────────────────────────────────
-
     private void setLoading(boolean loading) {
-        progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);
-        analyzeButton.setEnabled(!loading);
+        if (progressBar != null) progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);
+        if (analyzeButton != null) analyzeButton.setEnabled(!loading);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (speechEngine != null) speechEngine.release();
     }
 }

@@ -65,6 +65,9 @@
             android:name=".activities.SettingsActivity"
             android:exported="false" />
 
+        <activity android:name=".activities.FavoritesActivity"
+            android:exported="false" />
+
         <!-- Task 1: Embedded YouTube player -->
         <activity
             android:name=".activities.YouTubePlayerActivity"

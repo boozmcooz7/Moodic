@@ -47,8 +47,8 @@ public class InputProcessor {
                     musicVector.acousticness
             };
 
-            // Call the manager with the double array as expected by updateDynamicProfile(String, double[])
-            FirebaseManager.getInstance().updateDynamicProfile(uid, currentProfile);
+            // Call the manager with the double array and null listener
+            FirebaseManager.getInstance().updateDynamicProfile(uid, currentProfile, null);
             Log.d(TAG, "✅ dynamicListeningProfile updated with current mood");
 
         } catch (Exception e) {
